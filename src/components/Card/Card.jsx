@@ -2,6 +2,7 @@ import React from 'react';
 import './Card.css';
 import Button from '../Button/Button';
 
+
 const Card = ({ title, description, price, imageUrl, actionText = "Add to Cart", onAction }) => {
   return (
     <div className="card glass">
