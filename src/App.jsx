@@ -60,21 +60,31 @@ function App() {
     <>
       {/* Navigation Bar */}
       {shouldShowNav && !isNavHidden && (
-        <nav style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '20px',
-          padding: '20px',
-          background: 'var(--color-surface)',
-          borderBottom: '1px solid var(--glass-border)',
-          flexWrap: 'wrap'
-        }}>
-          <button onClick={() => setCurrentPage('home')} style={{ background: 'none', border: 'none', color: currentPage === 'home' ? 'var(--color-primary)' : 'var(--color-text)', cursor: 'pointer', fontWeight: 600, fontSize: '1.1rem', transition: 'var(--transition-smooth)' }}>Home</button>
-          <button onClick={() => setCurrentPage('catalog')} style={{ background: 'none', border: 'none', color: currentPage === 'catalog' ? 'var(--color-primary)' : 'var(--color-text)', cursor: 'pointer', fontWeight: 600, fontSize: '1.1rem', transition: 'var(--transition-smooth)' }}>Catalog</button>
-          <button onClick={() => setCurrentPage('cart')} style={{ background: 'none', border: 'none', color: currentPage === 'cart' || currentPage === 'checkout' ? 'var(--color-primary)' : 'var(--color-text)', cursor: 'pointer', fontWeight: 600, fontSize: '1.1rem', transition: 'var(--transition-smooth)' }}>Cart</button>
-          <button onClick={() => setCurrentPage('profile')} style={{ background: 'none', border: 'none', color: currentPage === 'profile' ? 'var(--color-primary)' : 'var(--color-text)', cursor: 'pointer', fontWeight: 600, fontSize: '1.1rem', transition: 'var(--transition-smooth)' }}>Profile</button>
-          
-
+        <nav className="d2c-nav">
+          <button 
+            onClick={() => setCurrentPage('home')} 
+            className={`d2c-nav-btn ${currentPage === 'home' ? 'active' : ''}`}
+          >
+            Home
+          </button>
+          <button 
+            onClick={() => setCurrentPage('catalog')} 
+            className={`d2c-nav-btn ${currentPage === 'catalog' ? 'active' : ''}`}
+          >
+            Catalog
+          </button>
+          <button 
+            onClick={() => setCurrentPage('cart')} 
+            className={`d2c-nav-btn ${currentPage === 'cart' || currentPage === 'checkout' ? 'active' : ''}`}
+          >
+            Cart
+          </button>
+          <button 
+            onClick={() => setCurrentPage('profile')} 
+            className={`d2c-nav-btn ${currentPage === 'profile' ? 'active' : ''}`}
+          >
+            Profile
+          </button>
         </nav>
       )}
 
