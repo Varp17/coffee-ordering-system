@@ -3,7 +3,7 @@ import './OrderQueue.css';
 import Button from '../../../components/Button/Button';
 import api from '../../../services/api';
 
-const OrderQueue = () => {
+const OrderQueue = ({ onLogout }) => {
   const [orders, setOrders] = useState([]);
   const [selectedKOT, setSelectedKOT] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,8 +40,9 @@ const OrderQueue = () => {
 
   return (
     <div className="order-queue-view">
-      <div className="view-header">
+      <div className="view-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 className="section-title">Barista Order Queue</h2>
+        {onLogout && <Button variant="secondary" size="small" onClick={onLogout}>Logout</Button>}
       </div>
 
       <div className="queue-columns">

@@ -12,7 +12,7 @@ import Accounting from '../Accounting/Accounting';
 import Production from '../Production/Production';
 import Stores from '../Stores/Stores';
 
-const Layout = () => {
+const Layout = ({ onLogout }) => {
   const [currentTab, setCurrentTab] = useState('dashboard');
 
   return (
@@ -38,7 +38,7 @@ const Layout = () => {
         </ul>
         <div className="sidebar-footer">
           <p>Logged in as Admin</p>
-          <button className="logout-btn">Logout</button>
+          <button className="logout-btn" onClick={onLogout}>Logout</button>
         </div>
       </div>
 

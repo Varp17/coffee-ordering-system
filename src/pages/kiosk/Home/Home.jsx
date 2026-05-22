@@ -1,7 +1,8 @@
 import React from 'react';
 import './Home.css';
+import Button from '../../../components/Button/Button';
 
-const Home = ({ onStart, onQrScan }) => {
+const Home = ({ onStart, onQrScan, onLogout }) => {
   return (
     <div className="kiosk-home">
       <div className="kiosk-overlay"></div>
@@ -35,6 +36,16 @@ const Home = ({ onStart, onQrScan }) => {
             </button>
           </div>
         </div>
+
+        <div className="action-buttons">
+          <Button variant="primary" size="large" onClick={onStart}>Order Now</Button>
+          <Button variant="secondary" size="large" onClick={onQrScan}>Scan QR</Button>
+        </div>
+        {onLogout && (
+          <div style={{ marginTop: '30px' }}>
+            <Button variant="secondary" size="small" onClick={onLogout}>Exit Kiosk Mode</Button>
+          </div>
+        )}
 
         <div className="brand-footer">
           <p>Scan QR code at the kiosk to order from your phone</p>

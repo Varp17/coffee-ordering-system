@@ -53,6 +53,13 @@ function App() {
     else if (role === 'd2c') setCurrentPage('home');
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsAdminLoggedIn(false);
+    setAppMode('');
+    setCurrentPage('portal');
+  };
+
   return (
     <>
       {/* Navigation Bar */}
@@ -82,6 +89,12 @@ function App() {
           >
             Profile
           </button>
+          <button 
+            onClick={handleLogout} 
+            className="d2c-nav-btn logout"
+          >
+            Logout
+          </button>
         </nav>
       )}
 
@@ -92,13 +105,14 @@ function App() {
       {currentPage === 'cart' && <Cart onProceedToCheckout={() => setCurrentPage('checkout')} />}
       {currentPage === 'profile' && <Profile />}
       {currentPage === 'checkout' && <Checkout onBackToCart={() => setCurrentPage('cart')} />}
-      {currentPage === 'barista' && <OrderQueue />}
+      {currentPage === 'barista' && <OrderQueue onLogout={handleLogout} />}
       
       {/* Kiosk Flow */}
       {currentPage === 'kiosk' && (
         <KioskHome 
           onStart={() => setCurrentPage('kiosk-catalog')} 
           onQrScan={() => setCurrentPage('kiosk-qr')}
+          onLogout={handleLogout}
         />
       )}
       {currentPage === 'kiosk-catalog' && (
@@ -155,7 +169,7 @@ function App() {
           setCurrentPage('admin-dashboard');
         }} />
       )}
-      {currentPage === 'admin-dashboard' && isAdminLoggedIn && <Layout />}
+      {currentPage === 'admin-dashboard' && isAdminLoggedIn && <Layout onLogout={handleLogout} />}
     </>
   )
 }
