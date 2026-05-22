@@ -8,6 +8,9 @@ import Menu from '../Menu/Menu'; // Import the Menu component
 import Customers from '../Customers/Customers'; // Import the Customers component
 import Dashboard from '../Dashboard/Dashboard'; // Import the Dashboard component
 import Roles from '../Roles/Roles'; // Import the new Roles component
+import Accounting from '../Accounting/Accounting';
+import Production from '../Production/Production';
+import Stores from '../Stores/Stores';
 
 const Layout = () => {
   const [currentTab, setCurrentTab] = useState('dashboard');
@@ -25,6 +28,9 @@ const Layout = () => {
           <li className={currentTab === 'menu' ? 'active' : ''} onClick={() => setCurrentTab('menu')}>Menu</li>
           <li className={currentTab === 'inventory' ? 'active' : ''} onClick={() => setCurrentTab('inventory')}>Inventory</li>
           <li className={currentTab === 'ingredients' ? 'active' : ''} onClick={() => setCurrentTab('ingredients')}>Ingredients</li>
+          <li className={currentTab === 'production' ? 'active' : ''} onClick={() => setCurrentTab('production')}>Production</li>
+          <li className={currentTab === 'accounting' ? 'active' : ''} onClick={() => setCurrentTab('accounting')}>Accounting</li>
+          <li className={currentTab === 'stores' ? 'active' : ''} onClick={() => setCurrentTab('stores')}>Stores</li>
           <li className={currentTab === 'customers' ? 'active' : ''} onClick={() => setCurrentTab('customers')}>Customers</li>
           <li className={currentTab === 'roles' ? 'active' : ''} onClick={() => setCurrentTab('roles')}>Roles</li>
           <li className={currentTab === 'cms' ? 'active' : ''} onClick={() => setCurrentTab('cms')}>Website CMS</li>
@@ -52,6 +58,9 @@ const Layout = () => {
           {currentTab === 'menu' && <Menu />}
           {currentTab === 'inventory' && <Inventory />}
           {currentTab === 'ingredients' && <Ingredients />}
+          {currentTab === 'production' && <Production />}
+          {currentTab === 'accounting' && <Accounting />}
+          {currentTab === 'stores' && <Stores />}
           {currentTab === 'customers' && <Customers />}
           {currentTab === 'roles' && <Roles />}
           {currentTab === 'cms' && <CMS />}

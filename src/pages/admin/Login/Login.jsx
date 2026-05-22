@@ -1,18 +1,36 @@
 import React, { useState } from 'react';
 import './Login.css';
 import Button from '../../../components/Button/Button';
+import api from '../../../services/api';
 
 const Login = ({ onLogin }) => {
-  const [email, setEmail] = useState('admin@coffee.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // For now, just simulate a successful login
-    if (email && password) {
-      onLogin();
-    } else {
+    if (!email || !password) {
       alert('Please fill in all fields.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await api.post('/auth/login', { email, password });
+      
+      const token = response.data.token || response.data.data?.token;
+      if (token) {
+        localStorage.setItem('token', token);
+        onLogin();
+      } else {
+        alert('Login failed: No token received.');
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      alert('Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -41,7 +59,9 @@ const Login = ({ onLogin }) => {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <Button variant="primary" size="large" type="submit">Sign In</Button>
+          <Button variant="primary" size="large" type="submit" disabled={loading}>
+            {loading ? 'Signing In...' : 'Sign In'}
+          </Button>
         </form>
       </div>
     </div>

@@ -1,29 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Cart.css';
 import Button from '../../../components/Button/Button';
+import api from '../../../services/api';
 
 const Cart = ({ onProceedToCheckout }) => {
-  const [cartItems, setCartItems] = useState([
-    { 
-      id: 1, 
-      title: 'Dark Roast Concentrate', 
-      price: 12.99, 
-      quantity: 2, 
-      imageUrl: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-      customizations: [
-        { name: 'Extra Shot', price: 1.50 },
-        { name: 'Oat Milk', price: 0.50 }
-      ]
-    },
-    { 
-      id: 2, 
-      title: 'Vanilla Infused Cold Brew', 
-      price: 14.99, 
-      quantity: 1, 
-      imageUrl: 'https://images.unsplash.com/photo-1461023235402-278239b9b242?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80',
-      customizations: []
-    }
-  ]);
+  const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const response = await api.get('/d2c/cart');
+        setCartItems(response.data.data || response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch cart:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCart();
+  }, []);
 
   const updateQuantity = (id, amount) => {
     setCartItems(items =>

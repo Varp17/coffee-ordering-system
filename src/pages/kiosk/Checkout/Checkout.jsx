@@ -1,18 +1,36 @@
 import React, { useState } from 'react';
 import './Checkout.css';
 import Button from '../../../components/Button/Button';
+import api from '../../../services/api';
 
 const Checkout = ({ cart, total, onBack, onComplete }) => {
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [orderId, setOrderId] = useState('');
 
-  const handlePay = () => {
+  const handlePay = async () => {
     setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
+    try {
+      // Create order payload
+      const orderData = {
+        source: 'Kiosk',
+        items: cart,
+        total_amount: total,
+        payment_method: paymentMethod,
+        status: 'Paid'
+      };
+      
+      const response = await api.post('/orders', orderData);
+      const newOrder = response.data.data || response.data;
+      setOrderId(newOrder.id || newOrder.order_id || '1234');
       setIsCompleted(true);
-    }, 2000);
+    } catch (error) {
+      console.error('Checkout failed:', error);
+      alert('Payment failed. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   if (isCompleted) {
@@ -22,7 +40,7 @@ const Checkout = ({ cart, total, onBack, onComplete }) => {
           <div className="success-icon">✓</div>
           <h2>Order Placed!</h2>
           <p>Thank you for your order.</p>
-          <p className="order-number">Order #1234</p>
+          <p className="order-number">Order #{orderId}</p>
           <p>Please collect your receipt and wait for your number to be called.</p>
           <Button variant="primary" size="large" onClick={onComplete}>Back to Home</Button>
         </div>

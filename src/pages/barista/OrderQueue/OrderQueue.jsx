@@ -1,62 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './OrderQueue.css';
 import Button from '../../../components/Button/Button';
+import api from '../../../services/api';
 
 const OrderQueue = () => {
-  const [orders, setOrders] = useState([
-    { 
-      id: 'ORD001', 
-      customer: 'John Doe', 
-      items: ['Dark Roast (M)', 'Croissant'], 
-      status: 'Pending', 
-      time: '5m ago',
-      kot: {
-        steps: [
-          'Grind 20g coffee beans to medium-fine.',
-          'Brew with 300ml water at 94°C.',
-          'Pour into medium cup and serve hot.'
-        ],
-        ingredients: ['20g Dark Roast Beans', '300ml Water']
-      }
-    },
-    { 
-      id: 'ORD002', 
-      customer: 'Jane Smith', 
-      items: ['Cold Brew (L)', 'Muffin'], 
-      status: 'In Progress', 
-      time: '2m ago',
-      kot: {
-        steps: [
-          'Pour 200ml Cold Brew concentrate into large cup.',
-          'Add 100ml cold water.',
-          'Fill with ice and serve.'
-        ],
-        ingredients: ['200ml Cold Brew Concentrate', '100ml Water', 'Ice']
-      }
-    },
-    { 
-      id: 'ORD003', 
-      customer: 'Bob Johnson', 
-      items: ['Latte (S)'], 
-      status: 'Completed', 
-      time: '10m ago',
-      kot: {
-        steps: [
-          'Pull 1 double espresso shot.',
-          'Steam 150ml milk to 65°C with light foam.',
-          'Pour milk over espresso creating a heart pattern.'
-        ],
-        ingredients: ['1 Espresso Shot', '150ml Milk']
-      }
-    }
-  ]);
-
+  const [orders, setOrders] = useState([]);
   const [selectedKOT, setSelectedKOT] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const moveStatus = (id, newStatus) => {
-    setOrders(orders.map(order => 
-      order.id === id ? { ...order, status: newStatus } : order
-    ));
+  const fetchOrders = async () => {
+    try {
+      const response = await api.get('/barista/orders');
+      setOrders(response.data.data || response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+    // In a real app, we'd poll or use websockets here
+    const interval = setInterval(fetchOrders, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const moveStatus = async (id, newStatus) => {
+    try {
+      await api.patch(`/barista/orders/${id}/status`, { status: newStatus });
+      setOrders(orders.map(order => 
+        order.id === id ? { ...order, status: newStatus } : order
+      ));
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      alert('Failed to update order status');
+    }
   };
 
   return (

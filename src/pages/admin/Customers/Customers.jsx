@@ -1,13 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Customers.css';
+import api from '../../../services/api';
 
 const Customers = () => {
-  const [customers, setCustomers] = useState([
-    { id: 1, name: 'John Doe', email: 'john@example.com', orders: 5, totalSpent: 4500, status: 'Active' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', orders: 2, totalSpent: 2200, status: 'Active' },
-    { id: 3, name: 'Bob Johnson', email: 'bob@example.com', orders: 1, totalSpent: 1200, status: 'Inactive' },
-    { id: 4, name: 'Alice Brown', email: 'alice@example.com', orders: 10, totalSpent: 9500, status: 'Active' }
-  ]);
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        // We'll use the users or customers endpoint based on what the backend offers
+        // Some d2c routes might handle customers. For now let's use /admin/users or /customers.
+        // As per app.js, there is an admin module `app.use(`${API}/admin`, adminRoutes);`
+        const response = await api.get('/admin/users');
+        setCustomers(response.data.data || response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch customers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCustomers();
+  }, []);
 
   return (
     <div className="customers-view">
@@ -16,37 +30,46 @@ const Customers = () => {
       </div>
 
       <div className="cms-table-container glass">
-        <table className="cms-table">
-          <thead>
-            <tr>
-              <th>Customer Name</th>
-              <th>Email</th>
-              <th>Total Orders</th>
-              <th>Total Spent (₹)</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {customers.map(customer => (
-              <tr key={customer.id}>
-                <td>{customer.name}</td>
-                <td>{customer.email}</td>
-                <td>{customer.orders}</td>
-                <td>₹{customer.totalSpent}</td>
-                <td>
-                  <span className={`status-chip ${customer.status.toLowerCase()}`}>
-                    {customer.status}
-                  </span>
-                </td>
-                <td>
-                  <button className="action-btn">View History</button>
-                  <button className="action-btn edit">Contact</button>
-                </td>
+        {loading ? (
+          <p style={{ padding: '20px' }}>Loading customers...</p>
+        ) : (
+          <table className="cms-table">
+            <thead>
+              <tr>
+                <th>Customer Name</th>
+                <th>Email</th>
+                <th>Total Orders</th>
+                <th>Total Spent (₹)</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {customers.map(customer => (
+                <tr key={customer.id}>
+                  <td>{customer.name || customer.first_name}</td>
+                  <td>{customer.email}</td>
+                  <td>{customer.orders_count || 0}</td>
+                  <td>₹{customer.total_spent || 0}</td>
+                  <td>
+                    <span className={`status-chip ${(customer.status || 'Active').toLowerCase()}`}>
+                      {customer.status || 'Active'}
+                    </span>
+                  </td>
+                  <td>
+                    <button className="action-btn">View History</button>
+                    <button className="action-btn edit">Contact</button>
+                  </td>
+                </tr>
+              ))}
+              {customers.length === 0 && (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center' }}>No customers found.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

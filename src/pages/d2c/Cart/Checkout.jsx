@@ -1,11 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './Cart.css'; // Sharing styles for simplicity
 import Button from '../../../components/Button/Button';
+import api from '../../../services/api';
 
 const Checkout = ({ onBackToCart }) => {
-  const subtotal = 42.97; // Mock data
+  const [subtotal, setSubtotal] = useState(42.97); // Ideally fetched from cart state
   const shipping = 5.00;
   const total = subtotal + shipping;
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleCheckout = async () => {
+    setIsProcessing(true);
+    try {
+      const orderData = {
+        source: 'D2C',
+        total_amount: total,
+        payment_method: 'card',
+        status: 'Paid'
+      };
+      
+      await api.post('/orders', orderData);
+      alert('Order Placed Successfully!');
+      window.location.href = '/'; // Redirect to home or success page
+    } catch (error) {
+      console.error('Checkout failed:', error);
+      alert('Payment failed. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="cart-page checkout-page">
@@ -65,7 +88,9 @@ const Checkout = ({ onBackToCart }) => {
             <span>Total</span>
             <span>${total.toFixed(2)}</span>
           </div>
-          <Button variant="primary" size="large" onClick={() => alert('Order Placed Successfully!')}>Pay Now</Button>
+          <Button variant="primary" size="large" onClick={handleCheckout} disabled={isProcessing}>
+            {isProcessing ? 'Processing...' : 'Pay Now'}
+          </Button>
           <button className="back-btn" onClick={onBackToCart} style={{ 
             background: 'none', 
             border: 'none', 

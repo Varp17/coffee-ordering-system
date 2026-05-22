@@ -1,23 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Catalog.css';
 import Card from '../../../components/Card/Card';
+import api from '../../../services/api';
 
 const Catalog = () => {
-  const products = [
-    { id: 1, title: 'Dark Roast Concentrate', description: 'Rich, bold, and smooth. Perfect for iced coffee and lattes.', price: '$12.99', category: 'Concentrates', imageUrl: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' },
-    { id: 2, title: 'Vanilla Infused Cold Brew', description: 'Smooth cold brew with a touch of natural Madagascar vanilla.', price: '$14.99', category: 'Cold Brew', imageUrl: 'https://images.unsplash.com/photo-1461023235402-278239b9b242?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' },
-    { id: 3, title: 'Hazelnut Dream', description: 'Toasted hazelnut flavor blended with our signature roast.', price: '$13.99', category: 'Flavored', imageUrl: 'https://images.unsplash.com/photo-1559496417-e7f25cb247f3?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' },
-    { id: 4, title: 'Caramel Macchiato Mix', description: 'Sweet caramel notes with a strong espresso base.', price: '$15.99', category: 'Concentrates', imageUrl: 'https://images.unsplash.com/photo-1572282823616-95e347895e64?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' },
-    { id: 5, title: 'Espresso Blend', description: 'Fine ground espresso blend for a quick energy boost.', price: '$10.99', category: 'Beans', imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' },
-    { id: 6, title: 'Mocha Magic', description: 'Chocolatey goodness mixed with premium coffee.', price: '$14.49', category: 'Flavored', imageUrl: 'https://images.unsplash.com/photo-1578314675249-a6910f80cc4e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80' }
-  ];
-
-  const categories = ['All', 'Concentrates', 'Cold Brew', 'Flavored', 'Beans'];
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState(['All']);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCatalog = async () => {
+      try {
+        const [productsRes, categoriesRes] = await Promise.all([
+          api.get('/products'),
+          api.get('/categories')
+        ]);
+        
+        // Handle potentially nested data
+        const fetchedProducts = productsRes.data.data || productsRes.data || [];
+        const fetchedCategories = categoriesRes.data.data || categoriesRes.data || [];
+        
+        setProducts(fetchedProducts);
+        
+        const catNames = fetchedCategories.map(c => c.name || c);
+        setCategories(['All', ...catNames]);
+      } catch (error) {
+        console.error('Failed to fetch catalog:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCatalog();
+  }, []);
 
   const filteredProducts = selectedCategory === 'All' 
     ? products 
-    : products.filter(p => p.category === selectedCategory);
+    : products.filter(p => (p.category?.name || p.category) === selectedCategory);
 
   return (
     <div className="catalog-page">
@@ -40,18 +59,23 @@ const Catalog = () => {
       </div>
 
       {/* Products Grid */}
-      <div className="catalog-grid">
-        {filteredProducts.map(product => (
-          <Card 
-            key={product.id}
-            title={product.title}
-            description={product.description}
-            price={product.price}
-            imageUrl={product.imageUrl}
-            onAction={() => alert(`Added ${product.title} to cart!`)}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div className="loading-spinner">Loading...</div>
+      ) : (
+        <div className="catalog-grid">
+          {filteredProducts.map(product => (
+            <Card 
+              key={product.id}
+              title={product.title || product.name}
+              description={product.description}
+              price={product.price}
+              imageUrl={product.imageUrl || product.image_url}
+              onAction={() => alert(`Added ${product.title || product.name} to cart!`)}
+            />
+          ))}
+          {filteredProducts.length === 0 && <p>No products found in this category.</p>}
+        </div>
+      )}
     </div>
   );
 };
