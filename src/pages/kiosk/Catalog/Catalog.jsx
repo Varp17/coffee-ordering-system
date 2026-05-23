@@ -41,7 +41,7 @@ const Catalog = ({ onBack, onLogin, onCreateCustom, onCheckout }) => {
     setCart([...cart, product]);
   };
 
-  const total = cart.reduce((sum, item) => sum + item.price, 0);
+  const total = cart.reduce((sum, item) => sum + item.base_price, 0);
 
   return (
     <div className="kiosk-catalog">
@@ -73,8 +73,8 @@ const Catalog = ({ onBack, onLogin, onCreateCustom, onCheckout }) => {
             <Card 
               key={product.id}
               title={product.name}
-              price={`₹${product.price}`}
-              imageUrl={product.image}
+              price={`₹${product.base_price}`}
+              imageUrl={product.image_url}
               actionText="Add"
               onAction={() => addToCart(product)}
             />
@@ -92,7 +92,7 @@ const Catalog = ({ onBack, onLogin, onCreateCustom, onCheckout }) => {
               {cart.map((item, index) => (
                 <li key={index}>
                   <span>{item.name}</span>
-                  <span>₹{item.price}</span>
+                  <span>₹{item.base_price}</span>
                 </li>
               ))}
             </ul>

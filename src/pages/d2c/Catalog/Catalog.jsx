@@ -68,7 +68,7 @@ const Catalog = () => {
               key={product.id}
               title={product.title || product.name}
               description={product.description}
-              price={product.price}
+              price={product.base_price ? `₹${product.base_price}` : product.price}
               imageUrl={product.imageUrl || product.image_url}
               onAction={() => alert(`Added ${product.title || product.name} to cart!`)}
             />
