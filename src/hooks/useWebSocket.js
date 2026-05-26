@@ -1,13 +1,17 @@
 import { useEffect, useRef } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
 import { useNotificationStore } from '../store/useNotificationStore';
+import { useAuthStore } from '../store/useAuthStore';
 
-export const useWebSocket = (role) => {
+export const useWebSocket = (roleParam) => {
   const fetchOrders = useOrderStore((state) => state.fetchOrders);
   const fetchBaristaQueue = useOrderStore((state) => state.fetchBaristaQueue);
   const addNotification = useNotificationStore((state) => state.addNotification);
   const tickTimers = useOrderStore((state) => state.tickTimers);
+  const storeRole = useAuthStore((state) => state.role);
   const wsRef = useRef(null);
+
+  const role = roleParam || storeRole;
 
   useEffect(() => {
     // 1. KDS SLA Timers Tick (every 30 seconds, simulate 1 minute elapsed)
@@ -22,7 +26,10 @@ export const useWebSocket = (role) => {
     if (token && ALLOWED_ROLES.includes(role)) {
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const storeId = localStorage.getItem('dc_store_id') || '1';
-      const wsUrl = `${wsProtocol}//${window.location.host}/ws?token=${token}&storeId=${storeId}`;
+      const wsHost = window.location.hostname.includes('vercel.app')
+        ? 'coffee-ordering-system-backend.onrender.com'
+        : window.location.host;
+      const wsUrl = `${wsProtocol}//${wsHost}/ws?token=${token}&storeId=${storeId}`;
 
       const connect = () => {
         console.log('[WS] Connecting to:', wsUrl);

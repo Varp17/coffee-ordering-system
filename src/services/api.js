@@ -4,7 +4,9 @@
    and auto-logout on 401.
    ============================================ */
 
-const BASE_URL = '/api/v1';
+const BASE_URL = window.location.hostname.includes('vercel.app')
+  ? 'https://coffee-ordering-system-backend.onrender.com/api/v1'
+  : '/api/v1';
 
 class ApiClient {
   constructor() {

@@ -18,4 +18,7 @@ export const d2cService = {
   // Orders
   getOrders: async (params = {}) => api.get('/d2c/orders', params),
   getOrderDetail: async (orderId) => api.get(`/d2c/orders/${orderId}`),
+
+  // Subscriptions
+  getSubscriptions: async () => api.get('/cms/subscriptions'),
 };
