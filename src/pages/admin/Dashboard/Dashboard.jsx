@@ -6,6 +6,7 @@ import Button from '../../../components/Button/Button';
 import { analyticsService } from '../../../services/analytics';
 import { orderService } from '../../../services/orders';
 import { formatCurrency } from '../../../utils/formatters';
+import { t } from '../../../utils/i18n';
 
 const COLORS = ['#6F4E37', '#EDD6C8', '#4dabf7', '#38d9a9'];
 
@@ -39,7 +40,7 @@ const Dashboard = () => {
   if (isLoading && !data) {
     return (
       <div className="dashboard-view flex-center" style={{ height: '70vh' }}>
-        <p style={{ color: 'var(--color-text-secondary)', fontSize: '1.2rem' }}>Loading analytics dashboard...</p>
+        <p style={{ color: 'var(--color-text-secondary)', fontSize: '1.2rem' }}>{t('dashboard.loading', 'Loading analytics dashboard...')}</p>
       </div>
     );
   }
@@ -47,8 +48,8 @@ const Dashboard = () => {
   if (hasError) {
     return (
       <div className="dashboard-view flex-center flex-col" style={{ height: '70vh', gap: '16px' }}>
-        <p style={{ color: 'var(--color-danger)', fontSize: '1.2rem', fontWeight: 600 }}>Failed to load dashboard statistics.</p>
-        <Button variant="outline" onClick={loadData}>Retry 🔄</Button>
+        <p style={{ color: 'var(--color-danger)', fontSize: '1.2rem', fontWeight: 600 }}>{t('dashboard.errorStats', 'Failed to load dashboard statistics.')}</p>
+        <Button variant="outline" onClick={loadData}>{t('dashboard.retryBtn', 'Retry 🔄')}</Button>
       </div>
     );
   }
@@ -63,16 +64,24 @@ const Dashboard = () => {
     value: p.sales
   }));
 
+  const getLegendColor = (index) => {
+    const mod = (Number(index) || 0) % COLORS.length;
+    if (mod === 0) return '#6F4E37';
+    if (mod === 1) return '#EDD6C8';
+    if (mod === 2) return '#4dabf7';
+    return '#38d9a9';
+  };
+
   return (
     <div className="dashboard-view animate-fade-in">
       <div className="view-header">
         <div>
-          <h2 className="section-title">Admin Dashboard</h2>
-          <p className="section-subtitle">Real-time overview of your store's performance</p>
+          <h2 className="section-title">{t('dashboard.title', 'Admin Dashboard')}</h2>
+          <p className="section-subtitle">{t('dashboard.subtitle', "Real-time overview of your store's performance")}</p>
         </div>
         <div className="header-actions">
-          <Button variant="primary" onClick={() => alert('Exporting financial data to Zoho Books...')}>Export to Zoho</Button>
-          <Button variant="outline" onClick={() => alert('Exporting financial data to Tally...')}>Export to Tally</Button>
+          <Button variant="primary" onClick={() => alert('Exporting financial data to Zoho Books...')}>{t('dashboard.exportZoho', 'Export to Zoho')}</Button>
+          <Button variant="outline" onClick={() => alert('Exporting financial data to Tally...')}>{t('dashboard.exportTally', 'Export to Tally')}</Button>
         </div>
       </div>
 
@@ -112,8 +121,8 @@ const Dashboard = () => {
         {/* Main Chart */}
         <div className="chart-card span-2">
           <div className="card-header">
-            <h3>Weekly Revenue Trend</h3>
-            <select className="simple-select" onChange={loadData}><option>This Week</option></select>
+            <h3>{t('dashboard.weeklyTrendTitle', 'Weekly Revenue Trend')}</h3>
+            <select className="simple-select" onChange={loadData}><option>{t('dashboard.thisWeek', 'This Week')}</option></select>
           </div>
           <div className="chart-viewport">
             <ResponsiveContainer width="100%" height={300}>
@@ -137,12 +146,12 @@ const Dashboard = () => {
         {/* Real-time Order Feed */}
         <div className="feed-card">
           <div className="card-header">
-            <h3>Live Order Feed</h3>
+            <h3>{t('dashboard.liveFeedTitle', 'Live Order Feed')}</h3>
             <span className="live-pulse">● Live DB Feed</span>
           </div>
           <div className="feed-list">
             {liveOrders.length === 0 ? (
-              <p className="empty-feed">No active orders</p>
+              <p className="empty-feed">{t('dashboard.noOrders', 'No active orders')}</p>
             ) : (
               liveOrders.map((order, i) => (
                 <div key={i} className="feed-item">
@@ -166,26 +175,26 @@ const Dashboard = () => {
         {/* Top Products Pie Chart */}
         <div className="chart-card">
           <div className="card-header">
-            <h3>Top Products Split</h3>
+            <h3>{t('dashboard.topProductsTitle', 'Top Products Split')}</h3>
           </div>
           <div className="chart-viewport flex-center">
             {pieData.length === 0 ? (
-              <p style={{ color: 'var(--color-text-secondary)' }}>No sales data available yet</p>
+              <p style={{ color: 'var(--color-text-secondary)' }}>{t('dashboard.noSalesData', 'No sales data available yet')}</p>
             ) : (
               <>
                 <ResponsiveContainer width="100%" height={250}>
                   <PieChart>
                     <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
+                       data={pieData}
+                       cx="50%"
+                       cy="50%"
+                       innerRadius={60}
+                       outerRadius={80}
+                       paddingAngle={5}
+                       dataKey="value"
                     >
                       {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell key={`cell-${index}`} fill={getLegendColor(index)} />
                       ))}
                     </Pie>
                     <Tooltip />
@@ -194,7 +203,7 @@ const Dashboard = () => {
                 <div className="pie-legend">
                   {pieData.map((entry, index) => (
                     <div key={index} className="legend-item">
-                      <span className="legend-color" style={{ backgroundColor: COLORS[index % COLORS.length] }}></span>
+                      <span className="legend-color" style={{ backgroundColor: getLegendColor(index) }}></span>
                       <span className="legend-label">{entry.name}</span>
                     </div>
                   ))}
@@ -207,21 +216,21 @@ const Dashboard = () => {
         {/* Top Products Table */}
         <div className="table-card span-2">
           <div className="card-header">
-            <h3>Top Selling Products</h3>
+            <h3>{t('dashboard.topSellingTitle', 'Top Selling Products')}</h3>
           </div>
           <div className="table-container">
             <table className="table">
               <thead>
                 <tr>
-                  <th>Product</th>
-                  <th>Sales</th>
-                  <th>Revenue (₹)</th>
+                  <th>{t('dashboard.colProduct', 'Product')}</th>
+                  <th>{t('dashboard.colSales', 'Sales')}</th>
+                  <th>{t('dashboard.colRevenue', 'Revenue (₹)')}</th>
                 </tr>
               </thead>
               <tbody>
                 {data.topProducts?.length === 0 ? (
                   <tr>
-                    <td colSpan="3" style={{ textAlign: 'center', color: 'var(--color-text-secondary)' }}>No top products data yet</td>
+                    <td colSpan="3" style={{ textAlign: 'center', color: 'var(--color-text-secondary)' }}>{t('dashboard.noTopProducts', 'No top products data yet')}</td>
                   </tr>
                 ) : (
                   data.topProducts?.map((p, idx) => (
