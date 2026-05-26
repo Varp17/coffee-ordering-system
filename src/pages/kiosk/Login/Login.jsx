@@ -36,7 +36,7 @@ const Login = ({ onLogin, onBack }) => {
 
   return (
     <div className="kiosk-login">
-      <div className="login-card glass">
+      <div className="login-card ">
         <button className="back-btn" onClick={onBack}>← Back</button>
         
         {!isOtpSent ? (
@@ -75,3 +75,4 @@ const Login = ({ onLogin, onBack }) => {
 };
 
 export default Login;
+

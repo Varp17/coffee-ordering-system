@@ -1,0 +1,162 @@
+.barista-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #1E1E1E; /* KDS uses dark theme by default to reduce eye strain in kitchens */
+  color: #FFFFFF;
+  font-family: var(--font-body);
+  overflow: hidden;
+}
+
+.kds-header {
+  height: 70px;
+  background-color: #2D2D2D;
+  border-bottom: 2px solid #3D3D3D;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1.5rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  z-index: 10;
+}
+
+.kds-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.kds-brand h1 {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.kds-logo {
+  font-size: 1.6rem;
+}
+
+.station-badge {
+  background-color: #444;
+  color: #E5A764;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid #555;
+  text-transform: uppercase;
+}
+
+.kds-nav {
+  display: flex;
+  gap: 0.5rem;
+  height: 100%;
+  align-items: flex-end;
+}
+
+.kds-nav-link {
+  text-decoration: none;
+  color: #B3B3B3;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #252525;
+  border: 1px solid #353535;
+  border-bottom: none;
+  transition: all var(--transition-fast);
+}
+
+.kds-nav-link:hover {
+  background-color: #353535;
+  color: #FFFFFF;
+}
+
+.kds-nav-link.active {
+  background-color: var(--color-primary);
+  color: #FFFFFF;
+  border-color: var(--color-primary);
+}
+
+.kds-badge {
+  background-color: rgba(255,255,255,0.25);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: 10px;
+}
+
+.kds-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sound-toggle {
+  background-color: #3D3D3D;
+  border: 1px solid #555;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: background-color var(--transition-fast);
+}
+
+.sound-toggle:hover {
+  background-color: #4D4D4D;
+}
+
+.sound-on {
+  border-color: var(--color-success);
+}
+
+.kds-exit-btn {
+  background-color: #C62828;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: background-color var(--transition-fast);
+}
+
+.kds-exit-btn:hover {
+  background-color: #E53935;
+}
+
+.kds-workspace {
+  flex-grow: 1;
+  padding: 1.5rem;
+  overflow: hidden; /* Scroll handles inside child page boards */
+  background-color: #121212;
+}
+
+@media (max-width: 992px) {
+  .kds-header {
+    height: auto;
+    flex-direction: column;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .kds-nav {
+    width: 100%;
+    overflow-x: auto;
+    border-bottom: 1px solid #333;
+    padding-bottom: 0.2rem;
+  }
+
+  .kds-nav-link {
+    white-space: nowrap;
+  }
+}

@@ -1,106 +1,345 @@
 import React, { useState } from 'react';
-import './Cart.css'; // Sharing styles for simplicity
+import { useNavigate } from 'react-router-dom';
+import './Checkout.css';
 import Button from '../../../components/Button/Button';
-import api from '../../../services/api';
+import Input from '../../../components/Input/Input';
+import Dropdown from '../../../components/Dropdown/Dropdown';
+import { useCartStore } from '../../../store/useCartStore';
+import { useOrderStore } from '../../../store/useOrderStore';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { formatCurrency } from '../../../utils/formatters';
+import toast from 'react-hot-toast';
 
-const Checkout = ({ onBackToCart }) => {
-  const [subtotal, setSubtotal] = useState(42.97); // Ideally fetched from cart state
-  const shipping = 5.00;
-  const total = subtotal + shipping;
-  const [isProcessing, setIsProcessing] = useState(false);
+const Checkout = () => {
+  const navigate = useNavigate();
+  const { items, getSubtotal, getDiscount, getTax, getTotal, clearCart, deliveryFee } = useCartStore();
+  const placeOrder = useOrderStore((state) => state.placeOrder);
+  const user = useAuthStore((state) => state.user);
 
-  const handleCheckout = async () => {
-    setIsProcessing(true);
-    try {
-      const orderData = {
-        source: 'D2C',
-        total_amount: total,
-        payment_method: 'card',
-        status: 'Paid'
-      };
-      
-      await api.post('/orders', orderData);
-      alert('Order Placed Successfully!');
-      window.location.href = '/'; // Redirect to home or success page
-    } catch (error) {
-      console.error('Checkout failed:', error);
-      alert('Payment failed. Please try again.');
-    } finally {
-      setIsProcessing(false);
+  // Form State
+  const [formData, setFormData] = useState({
+    name: user?.name || '',
+    email: user?.email || '',
+    phone: '',
+    address: '',
+    notes: ''
+  });
+
+  const [paymentMethod, setPaymentMethod] = useState('upi'); // upi, card, cod
+  const [upiMethod, setUpiMethod] = useState('qr'); // qr, vpa
+  const [vpaAddress, setVpaAddress] = useState('');
+  const [cardData, setCardData] = useState({ number: '', expiry: '', cvv: '' });
+  const [placingOrder, setPlacingOrder] = useState(false);
+
+  const subtotal = getSubtotal();
+  const discount = getDiscount();
+  const tax = getTax();
+  const total = getTotal();
+
+  // If cart is empty, redirect back
+  React.useEffect(() => {
+    if (items.length === 0 && !placingOrder) {
+      navigate('/cart');
     }
+  }, [items, navigate, placingOrder]);
+
+  const handleInputChange = (field, val) => {
+    setFormData((prev) => ({ ...prev, [field]: val }));
+  };
+
+  const handleCardChange = (field, val) => {
+    setCardData((prev) => ({ ...prev, [field]: val }));
+  };
+
+  const handlePlaceOrder = async (e) => {
+    e.preventDefault();
+    
+    // Validations
+    if (!formData.name.trim() || !formData.phone.trim() || !formData.address.trim()) {
+      toast.error('Please fill in all required fields (Name, Phone, Address).');
+      return;
+    }
+
+    if (paymentMethod === 'upi' && upiMethod === 'vpa' && !vpaAddress.includes('@')) {
+      toast.error('Please enter a valid UPI ID (e.g. name@okhdfc).');
+      return;
+    }
+
+    if (paymentMethod === 'card' && (cardData.number.length < 12 || !cardData.expiry || cardData.cvv.length < 3)) {
+      toast.error('Please enter valid Credit/Debit card details.');
+      return;
+    }
+
+    setPlacingOrder(true);
+    toast.loading('Processing secure payment...');
+
+    // Simulate payment transaction
+    setTimeout(() => {
+      toast.dismiss();
+      
+      const orderId = `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
+      const newOrder = {
+        id: orderId,
+        customer: formData.name,
+        email: formData.email || 'guest@digitalcoffee.com',
+        items: items.map((i) => ({
+          name: `${i.product.title} (${i.variant.name})`,
+          qty: i.quantity,
+          price: i.price
+        })),
+        total: total,
+        status: 'Pending',
+        source: 'D2C',
+        time: 'Just now',
+        createdAt: new Date().toISOString(),
+        paymentMethod: paymentMethod.toUpperCase(),
+        address: formData.address,
+        notes: formData.notes
+      };
+
+      // Place order in KDS & admin logs
+      placeOrder(newOrder);
+      
+      toast.success('Payment verified! Order placed successfully. ☕');
+      
+      // Clear cart
+      clearCart();
+      
+      // Redirect to success page
+      navigate('/success', { state: { orderId, total, customerName: formData.name } });
+    }, 1500);
   };
 
   return (
-    <div className="cart-page checkout-page">
-      <h1 className="cart-title">Secure <span className="text-gradient">Checkout</span></h1>
+    <div className="checkout-page animate-fade-in">
+      <div className="checkout-back-header">
+        <button className="back-btn" onClick={() => navigate('/cart')}>
+          ← Back to Cart
+        </button>
+        <h1 className="checkout-title">Secure <span className="text-gradient">Checkout</span></h1>
+      </div>
 
-      <div className="cart-container">
-        {/* Checkout Form */}
-        <div className="checkout-form glass" style={{ padding: '30px', flex: '2' }}>
-          <h2 className="section-title" style={{ marginBottom: '20px' }}>Shipping & Payment</h2>
-          <form className="form" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Full Name</label>
-              <input type="text" placeholder="John Doe" style={{ 
-                background: 'rgba(255,255,255,0.05)', 
-                border: '1px solid var(--glass-border)', 
-                padding: '12px', 
-                borderRadius: '8px',
-                color: 'var(--color-text)'
-              }} />
+      <div className="checkout-grid">
+        {/* Left billing & payment column */}
+        <form onSubmit={handlePlaceOrder} className="checkout-left-col">
+          
+          {/* Shipping Form */}
+          <div className="checkout-section-panel">
+            <h2>📍 Delivery & Contact Details</h2>
+            <div className="shipping-form-grid">
+              <Input
+                label="Full Name *"
+                placeholder="Vikram Dev"
+                value={formData.name}
+                onChange={(val) => handleInputChange('name', val)}
+                required
+              />
+              <Input
+                label="Email Address"
+                type="email"
+                placeholder="vikram@gmail.com"
+                value={formData.email}
+                onChange={(val) => handleInputChange('email', val)}
+              />
+              <Input
+                label="Phone Number *"
+                placeholder="+91 98765 43210"
+                value={formData.phone}
+                onChange={(val) => handleInputChange('phone', val)}
+                required
+              />
+              <Input
+                label="Delivery Address *"
+                placeholder="Flat No, Wing, Society, Area, Bengaluru"
+                value={formData.address}
+                onChange={(val) => handleInputChange('address', val)}
+                required
+              />
+              <div className="form-full-row">
+                <Input
+                  label="Special Preparation / Delivery Notes"
+                  placeholder="E.g., Please knock door, ring bell, leave at gate, or extra hot."
+                  value={formData.notes}
+                  onChange={(val) => handleInputChange('notes', val)}
+                />
+              </div>
             </div>
-            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Address</label>
-              <input type="text" placeholder="123 Coffee Lane" style={{ 
-                background: 'rgba(255,255,255,0.05)', 
-                border: '1px solid var(--glass-border)', 
-                padding: '12px', 
-                borderRadius: '8px',
-                color: 'var(--color-text)'
-              }} />
-            </div>
-            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Card Details</label>
-              <input type="text" placeholder="xxxx-xxxx-xxxx-xxxx" style={{ 
-                background: 'rgba(255,255,255,0.05)', 
-                border: '1px solid var(--glass-border)', 
-                padding: '12px', 
-                borderRadius: '8px',
-                color: 'var(--color-text)'
-              }} />
-            </div>
-          </form>
-        </div>
+          </div>
 
-        {/* Order Summary */}
-        <div className="cart-summary glass" style={{ flex: '1' }}>
-          <h2 className="summary-title">Order Summary</h2>
-          <div className="summary-row">
-            <span>Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
+          {/* Payment Method Selector */}
+          <div className="checkout-section-panel">
+            <h2>💸 Select Payment Method</h2>
+            
+            <div className="payment-selector-tabs">
+              <button
+                type="button"
+                className={`payment-tab-btn ${paymentMethod === 'upi' ? 'active' : ''}`}
+                onClick={() => setPaymentMethod('upi')}
+              >
+                📱 Instant UPI
+              </button>
+              <button
+                type="button"
+                className={`payment-tab-btn ${paymentMethod === 'card' ? 'active' : ''}`}
+                onClick={() => setPaymentMethod('card')}
+              >
+                💳 Credit / Debit Card
+              </button>
+              <button
+                type="button"
+                className={`payment-tab-btn ${paymentMethod === 'cod' ? 'active' : ''}`}
+                onClick={() => setPaymentMethod('cod')}
+              >
+                💵 Cash on Delivery
+              </button>
+            </div>
+
+            {/* UPI Payment Container */}
+            {paymentMethod === 'upi' && (
+              <div className="payment-details-container animate-fade-in">
+                <div className="upi-toggle-options">
+                  <label className="upi-radio-label">
+                    <input
+                      type="radio"
+                      checked={upiMethod === 'qr'}
+                      onChange={() => setUpiMethod('qr')}
+                    />
+                    Scan Dynamic UPI QR (Recommended)
+                  </label>
+                  <label className="upi-radio-label">
+                    <input
+                      type="radio"
+                      checked={upiMethod === 'vpa'}
+                      onChange={() => setUpiMethod('vpa')}
+                    />
+                    Enter UPI ID (VPA)
+                  </label>
+                </div>
+
+                {upiMethod === 'qr' ? (
+                  <div className="upi-qr-display-box">
+                    <div className="mock-qr-code">
+                      {/* Generates premium simulated scanner */}
+                      <span className="qr-logo">☕</span>
+                      <div className="qr-scanners-corners"></div>
+                    </div>
+                    <p className="qr-hint">Scan this QR using PhonePe, GPay, or Paytm to pay <strong>{formatCurrency(total)}</strong></p>
+                  </div>
+                ) : (
+                  <div className="upi-vpa-input-box animate-fade-in">
+                    <Input
+                      label="UPI Virtual Address (VPA) *"
+                      placeholder="username@okaxis"
+                      value={vpaAddress}
+                      onChange={setVpaAddress}
+                    />
+                    <span className="upi-disclaimer">A payment request will be sent to your UPI App instantly.</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Card Payment Container */}
+            {paymentMethod === 'card' && (
+              <div className="payment-details-container card-details-fields animate-fade-in">
+                <Input
+                  label="Card Number *"
+                  placeholder="4321 5678 9012 3456"
+                  maxLength={19}
+                  value={cardData.number}
+                  onChange={(val) => handleCardChange('number', val)}
+                />
+                <div className="card-expiry-cvv">
+                  <Input
+                    label="Expiry Date *"
+                    placeholder="MM/YY"
+                    maxLength={5}
+                    value={cardData.expiry}
+                    onChange={(val) => handleCardChange('expiry', val)}
+                  />
+                  <Input
+                    label="CVV *"
+                    type="password"
+                    placeholder="***"
+                    maxLength={3}
+                    value={cardData.cvv}
+                    onChange={(val) => handleCardChange('cvv', val)}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Cash on Delivery Container */}
+            {paymentMethod === 'cod' && (
+              <div className="payment-details-container cod-container animate-fade-in">
+                <p>👍 Cash on Delivery selected. Please keep exact change of <strong>{formatCurrency(total)}</strong> ready for our delivery partner.</p>
+              </div>
+            )}
           </div>
-          <div className="summary-row">
-            <span>Shipping</span>
-            <span>${shipping.toFixed(2)}</span>
-          </div>
-          <div className="summary-divider"></div>
-          <div className="summary-row total-row">
-            <span>Total</span>
-            <span>${total.toFixed(2)}</span>
-          </div>
-          <Button variant="primary" size="large" onClick={handleCheckout} disabled={isProcessing}>
-            {isProcessing ? 'Processing...' : 'Pay Now'}
+
+          <Button
+            variant="primary"
+            size="large"
+            fullWidth={true}
+            type="submit"
+            disabled={placingOrder}
+          >
+            {placingOrder ? 'Processing Payment...' : `Pay & Place Order (${formatCurrency(total)}) ✨`}
           </Button>
-          <button className="back-btn" onClick={onBackToCart} style={{ 
-            background: 'none', 
-            border: 'none', 
-            color: 'var(--color-text-muted)', 
-            marginTop: '15px', 
-            cursor: 'pointer',
-            textDecoration: 'underline'
-          }}>
-            Back to Cart
-          </button>
+
+        </form>
+
+        {/* Right order summaries list */}
+        <div className="checkout-right-col">
+          <div className="checkout-summary-panel">
+            <h3>Cart Summary</h3>
+            <div className="checkout-summary-items">
+              {items.map((item) => (
+                <div key={item.cartItemId} className="summary-item-row">
+                  <div className="summary-item-left">
+                    <span className="qty-tag">{item.quantity}x</span>
+                    <span className="item-name">{item.product.title} ({item.variant.name})</span>
+                  </div>
+                  <span className="item-price">{formatCurrency(item.price * item.quantity)}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="summary-calculations">
+              <div className="summary-row">
+                <span>Subtotal</span>
+                <span>{formatCurrency(subtotal)}</span>
+              </div>
+              
+              {discount > 0 && (
+                <div className="summary-row discount-row">
+                  <span>Discount</span>
+                  <span>-{formatCurrency(discount)}</span>
+                </div>
+              )}
+              
+              <div className="summary-row">
+                <span>GST (18%)</span>
+                <span>{formatCurrency(tax)}</span>
+              </div>
+              
+              <div className="summary-row">
+                <span>Delivery Charge</span>
+                <span>{formatCurrency(deliveryFee)}</span>
+              </div>
+
+              <div className="summary-divider"></div>
+              
+              <div className="summary-row total-row">
+                <span>Grand Total</span>
+                <span className="total-val">{formatCurrency(total)}</span>
+              </div>
+            </div>
+
+            <div className="trust-indicator-box">
+              🔒 256-Bit SSL Encrypted secure server transactions.
+            </div>
+          </div>
         </div>
       </div>
     </div>

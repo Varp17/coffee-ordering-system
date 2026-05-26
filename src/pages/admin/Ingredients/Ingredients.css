@@ -1,11 +1,91 @@
 .ingredients-view {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 1.5rem;
 }
 
-.view-header {
+.ingredients-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
 }
+
+.ingredients-search-input {
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  outline: none;
+  width: 100%;
+}
+
+.ingredients-table th {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.ingredient-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ingredient-id {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.unit-text {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.not-applicable {
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.margin-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.margin-badge.high { background: rgba(40, 167, 69, 0.15); color: #51cf66; }
+.margin-badge.medium { background: rgba(255, 193, 7, 0.15); color: #ffd43b; }
+.margin-badge.low { background: rgba(220, 53, 69, 0.15); color: #ff8787; }
+
+.status-badge.active { color: #38d9a9; }
+.status-badge.inactive { color: #ff8787; }
+
+/* Modal Form Styles */
+.ingredients-modal {
+  max-width: 600px;
+}
+
+.ingredients-form {
+  padding: 1.5rem;
+}
+
+.form-hint {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin-bottom: 1rem;
+}
+
+.action-btn-sm.danger {
+  color: #ff8787;
+  border-color: rgba(255, 135, 135, 0.3);
+}
+
+.action-btn-sm.danger:hover {
+  background: rgba(220, 53, 69, 0.1);
+}
+

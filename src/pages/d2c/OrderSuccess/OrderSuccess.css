@@ -1,0 +1,202 @@
+.success-page {
+  padding: var(--space-56) var(--content-padding);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 85vh;
+  background-color: var(--color-bg);
+  animation: fadeIn var(--motion-smooth) var(--ease-out) both;
+}
+
+.success-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  padding: 3.5rem 3rem;
+  max-width: 650px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* Success Check Circle Animation */
+.success-check-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.success-check-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: rgba(76, 175, 130, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: scale-up 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.success-check-icon {
+  font-size: 2.5rem;
+  color: var(--color-success);
+  font-weight: 900;
+}
+
+@keyframes scale-up {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.success-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  font-weight: 800;
+  color: var(--color-secondary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.success-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.975rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.success-subtitle strong {
+  color: var(--color-text);
+}
+
+/* Brief badges */
+.order-brief-badges {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.brief-badge {
+  flex: 1;
+  background-color: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.brief-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.brief-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-secondary);
+}
+
+/* WhatsApp notification updates styling */
+.whatsapp-preview-box {
+  background-color: rgba(76, 175, 130, 0.05);
+  border: 1px solid rgba(76, 175, 130, 0.2);
+  border-radius: 16px;
+  padding: 1.25rem;
+  text-align: left;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.wa-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-success);
+}
+
+.wa-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-success);
+}
+
+.wa-body {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  color: var(--color-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.wa-link {
+  color: var(--color-info);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Live prep timeline */
+.success-timeline-section {
+  width: 100%;
+  text-align: left;
+  border-top: 1px solid var(--color-border);
+  padding-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.success-timeline-section h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-secondary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+/* Actions */
+.success-actions {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+}
+
+.success-actions button {
+  flex: 1;
+}
+
+@media (max-width: 576px) {
+  .success-card {
+    padding: 2rem 1.5rem;
+  }
+  
+  .order-brief-badges {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .success-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}

@@ -1,131 +1,265 @@
 import React, { useState, useEffect } from 'react';
 import './Roles.css';
 import Button from '../../../components/Button/Button';
-import Modal from '../../../components/Modal/Modal';
-import api from '../../../services/api';
+import { roleService } from '../../../services/roles';
+import toast from 'react-hot-toast';
+
+const ALL_PERMISSIONS = [
+  { module: 'Dashboard', actions: ['View', 'Export'] },
+  { module: 'Orders', actions: ['View', 'Edit', 'Refund', 'Delete'] },
+  { module: 'Menu', actions: ['View', 'Edit', 'Create', 'Delete'] },
+  { module: 'Inventory', actions: ['View', 'Edit', 'Adjust', 'Transfer'] },
+  { module: 'Customers', actions: ['View', 'Edit', 'Contact'] },
+  { module: 'Roles', actions: ['View', 'Edit', 'Assign'] },
+  { module: 'Financials', actions: ['View', 'Export'] },
+  { module: 'CMS', actions: ['View', 'Edit', 'Publish'] },
+];
 
 const Roles = () => {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
+  const [roles, setRoles] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingRole, setEditingRole] = useState(null);
+  
   const [formData, setFormData] = useState({
-    role: 'customer'
+    name: '',
+    description: '',
+    permissions: []
   });
 
-  const fetchData = async () => {
+  const loadRoles = async () => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      const res = await api.get('/admin/users');
-      setUsers(res.data.data || res.data || []);
+      const res = await roleService.getAll();
+      setRoles(res.data || res || []);
     } catch (err) {
-      console.error('Failed to fetch users:', err);
+      toast.error('Failed to load roles: ' + err.message);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    loadRoles();
   }, []);
 
-  const handleEdit = (user) => {
-    setEditingItem(user);
-    setFormData({
-      role: user.role || 'customer'
-    });
-    setIsModalOpen(true);
+  const openAddModal = () => {
+    setEditingRole(null);
+    setFormData({ name: '', description: '', permissions: [] });
+    setShowModal(true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await api.patch(`/admin/users/${editingItem.id}/role`, formData);
-      setIsModalOpen(false);
-      fetchData();
-    } catch (err) {
-      console.error('Failed to save role:', err);
-      alert('Failed to save role');
+  const openEditModal = (role) => {
+    setEditingRole(role);
+    setFormData({ 
+      name: role.name, 
+      description: role.description || '', 
+      permissions: Array.isArray(role.permissions) ? [...role.permissions] : [] 
+    });
+    setShowModal(true);
+  };
+
+  const handlePermissionToggle = (permissionName) => {
+    setFormData(prev => {
+      const perms = [...prev.permissions];
+      if (permissionName === 'All Access') {
+        return { ...prev, permissions: perms.includes('All Access') ? [] : ['All Access'] };
+      }
+      
+      const newPerms = perms.filter(p => p !== 'All Access');
+      if (newPerms.includes(permissionName)) {
+        return { ...prev, permissions: newPerms.filter(p => p !== permissionName) };
+      } else {
+        return { ...prev, permissions: [...newPerms, permissionName] };
+      }
+    });
+  };
+
+  const handleDelete = async (id) => {
+    const roleToDelete = roles.find(r => r.id === id);
+    if (roleToDelete?.name === 'Super Admin' || roleToDelete?.name === 'Admin') {
+      toast.error('Cannot delete system default roles');
+      return;
+    }
+    if (window.confirm('Are you sure you want to delete this role?')) {
+      try {
+        await roleService.delete(id);
+        toast.success('Role deleted successfully');
+        loadRoles();
+      } catch (err) {
+        toast.error('Failed to delete role: ' + err.message);
+      }
     }
   };
 
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (editingRole && editingRole.name === 'Super Admin') {
+      toast.error('Cannot modify Super Admin role');
+      return;
+    }
+
+    try {
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        permissions: formData.permissions
+      };
+
+      if (editingRole) {
+        await roleService.update(editingRole.id, payload);
+        toast.success('Role updated successfully');
+      } else {
+        await roleService.create(payload);
+        toast.success('Role created successfully');
+      }
+      setShowModal(false);
+      loadRoles();
+    } catch (err) {
+      toast.error('Failed to save role: ' + err.message);
+    }
+  };
+
+  if (isLoading && roles.length === 0) {
+    return (
+      <div className="roles-view flex-center" style={{ height: '70vh' }}>
+        <p style={{ color: 'var(--color-text-secondary)' }}>Loading roles...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="roles-view">
+    <div className="roles-view animate-fade-in">
       <div className="view-header">
-        <h2 className="section-title">Role & Access Management</h2>
+        <div>
+          <h2 className="section-title">Roles & Access Management (RBAC)</h2>
+          <p className="section-subtitle">Define permission sets and assign operational roles</p>
+        </div>
+        <Button variant="primary" onClick={openAddModal}>+ Create Custom Role</Button>
       </div>
 
-      <div className="cms-table-container glass">
-        {loading ? (
-          <p style={{ padding: '20px' }}>Loading users...</p>
-        ) : (
-          <table className="cms-table">
-            <thead>
-              <tr>
-                <th>User Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map(user => (
-                <tr key={user.id}>
-                  <td>{user.name || user.first_name}</td>
-                  <td>{user.email}</td>
-                  <td>
-                    <span className="permission-tag">{user.role}</span>
-                  </td>
-                  <td>
-                    <span className={`status-chip ${(user.is_active !== false ? 'Active' : 'Inactive').toLowerCase()}`}>
-                      {user.is_active !== false ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td>
-                    <button className="action-btn edit" onClick={() => handleEdit(user)}>Edit Role</button>
-                  </td>
-                </tr>
-              ))}
-              {users.length === 0 && (
-                <tr>
-                  <td colSpan="5" style={{ textAlign: 'center' }}>No users found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
+      <div className="roles-grid">
+        {roles.map(role => (
+          <div key={role.id} className="role-card">
+            <div className="role-card-header">
+              <div className="role-title-group">
+                <h3>{role.name}</h3>
+                <span className={`user-count ${role.users > 0 ? 'active' : ''}`}>
+                  👥 {role.users} {role.users === 1 ? 'User' : 'Users'}
+                </span>
+              </div>
+              <div className="role-actions">
+                <button className="icon-btn" onClick={() => openEditModal(role)}>✏️</button>
+                {role.name !== 'Super Admin' && role.name !== 'Admin' && (
+                  <button className="icon-btn danger" onClick={() => handleDelete(role.id)}>🗑️</button>
+                )}
+              </div>
+            </div>
+            
+            <p className="role-desc">{role.description}</p>
+            
+            <div className="role-permissions">
+              <h4>Assigned Permissions:</h4>
+              <div className="perm-tags">
+                {Array.isArray(role.permissions) && role.permissions.includes('All Access') ? (
+                  <span className="perm-tag all-access">🌟 Full System Access (All Modules)</span>
+                ) : (
+                  Array.isArray(role.permissions) && role.permissions.map((perm, i) => (
+                    <span key={i} className="perm-tag">{perm}</span>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)}
-        title="Edit User Role"
-      >
-        <form className="modal-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Role</label>
-            <select 
-              value={formData.role}
-              onChange={e => setFormData({...formData, role: e.target.value})}
-            >
-              <option value="customer">Customer</option>
-              <option value="super_admin">Super Admin</option>
-              <option value="admin">Admin</option>
-              <option value="store_manager">Store Manager</option>
-              <option value="barista">Barista</option>
-              <option value="kitchen">Kitchen</option>
-              <option value="kiosk">Kiosk</option>
-            </select>
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-content roles-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{editingRole ? `Edit Role: ${editingRole.name}` : 'Create Custom Role'}</h2>
+              <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+            </div>
+            
+            <form onSubmit={handleSave} className="roles-form">
+              <div className="form-group">
+                <label>Role Name</label>
+                <input 
+                  type="text" 
+                  required 
+                  value={formData.name} 
+                  onChange={e => setFormData({...formData, name: e.target.value})}
+                  placeholder="e.g., Regional Manager" 
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Description</label>
+                <input 
+                  type="text" 
+                  required 
+                  value={formData.description} 
+                  onChange={e => setFormData({...formData, description: e.target.value})}
+                  placeholder="Brief description of responsibilities" 
+                />
+              </div>
+
+              <div className="permissions-matrix-section">
+                <div className="matrix-header">
+                  <h3>Permission Matrix</h3>
+                  <label className="all-access-toggle">
+                    <input 
+                      type="checkbox" 
+                      checked={formData.permissions.includes('All Access')}
+                      onChange={() => handlePermissionToggle('All Access')}
+                    />
+                    <span>Grant Full "All Access" (Super User)</span>
+                  </label>
+                </div>
+
+                {!formData.permissions.includes('All Access') && (
+                  <div className="matrix-grid">
+                    {ALL_PERMISSIONS.map(module => {
+                      const isModuleChecked = formData.permissions.includes(module.module);
+                      
+                      return (
+                        <div key={module.module} className="matrix-module-card">
+                          <label className="module-header-toggle">
+                            <input 
+                              type="checkbox" 
+                              checked={isModuleChecked}
+                              onChange={() => handlePermissionToggle(module.module)}
+                            />
+                            <strong>{module.module}</strong>
+                          </label>
+                          <div className="module-actions-list">
+                            {module.actions.map(action => (
+                              <label key={action} className="action-toggle">
+                                <input 
+                                  type="checkbox" 
+                                  checked={isModuleChecked}
+                                  onChange={() => !isModuleChecked && handlePermissionToggle(module.module)}
+                                />
+                                <span>{action}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-footer">
+                <Button variant="ghost" onClick={() => setShowModal(false)} type="button">Cancel</Button>
+                <Button variant="primary" type="submit">{editingRole ? 'Update Role' : 'Create Role'}</Button>
+              </div>
+            </form>
           </div>
-          <div className="modal-actions">
-            <Button variant="secondary" onClick={() => setIsModalOpen(false)} type="button">Cancel</Button>
-            <Button variant="primary" type="submit">Save</Button>
-          </div>
-        </form>
-      </Modal>
+        </div>
+      )}
     </div>
   );
 };

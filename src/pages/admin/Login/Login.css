@@ -1,59 +1,270 @@
-.login-page {
-  height: 100vh;
+/* Operator Login Container & Layout */
+.operator-login-container {
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: radial-gradient(circle at center, #2C1E14 0%, #0F0C0B 100%);
+  background-color: var(--color-bg);
+  padding: 20px;
+  font-family: var(--font-heading), var(--font-body), sans-serif;
 }
 
-.login-card {
-  padding: 40px;
+/* White Card Layout */
+.operator-login-card {
+  background: var(--color-surface);
   width: 100%;
-  max-width: 400px;
+  max-width: 440px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-3);
+  border: 1px solid var(--color-border);
+  padding: 40px 32px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* Headings */
+.operator-login-title {
+  font-size: 2.3rem;
+  color: var(--color-espresso);
+  font-weight: 700;
   text-align: center;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
 }
 
-.login-title {
-  font-size: 2.5rem;
-  margin-bottom: 10px;
+.operator-login-subtitle {
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin: 0 0 32px 0;
+  font-weight: 400;
 }
 
-.login-subtitle {
-  color: var(--color-text-muted);
-  font-size: 1rem;
-  margin-bottom: 30px;
-}
-
-.login-form {
+/* Form Styles */
+.operator-login-form {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.form-group {
+.operator-form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.operator-form-label {
+  font-size: 0.95rem;
+  color: var(--color-espresso);
+  font-weight: 600;
   text-align: left;
 }
 
-.form-group label {
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-}
-
-.form-group input {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  padding: 12px;
-  border-radius: 8px;
-  color: var(--color-text);
+/* Mockup Input Styles */
+.operator-form-input {
+  background-color: var(--color-cream);
+  border: 1px solid var(--color-cream-dark);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
   font-size: 1rem;
-  transition: var(--transition-smooth);
+  color: var(--color-text);
+  transition: all var(--transition-fast);
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
 }
 
-.form-group input:focus {
+.operator-form-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.operator-form-input:focus {
+  background-color: var(--color-surface);
   border-color: var(--color-primary);
-  outline: none;
-  background: rgba(255, 255, 255, 0.08);
+  box-shadow: var(--glow-primary);
+}
+
+.operator-form-input.input-error {
+  border-color: var(--color-danger);
+  background-color: var(--color-danger-light);
+}
+
+.operator-form-input.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+/* Captcha Layout */
+.captcha-generator-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.captcha-display-box {
+  flex-grow: 1;
+  height: 48px;
+  background-color: var(--color-surface-alt);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+.captcha-char {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 4px;
+  display: inline-block;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.captcha-noise-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: repeating-linear-gradient(90deg, transparent, transparent 10px, var(--color-accent) 10px, var(--color-accent) 12px, transparent 12px, transparent 20px, var(--color-primary) 20px, var(--color-primary) 22px);
+  opacity: 0.25;
+  transform: translateY(-50%) rotate(-2deg);
+  pointer-events: none;
+}
+
+.captcha-refresh-btn {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  width: 48px;
+  height: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all var(--transition-fast);
+}
+
+.captcha-refresh-btn:hover {
+  background-color: var(--color-surface-hover);
+  border-color: var(--color-primary-light);
+  transform: rotate(30deg);
+}
+
+.captcha-input-field {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+/* Green Action Button matching mockup */
+.operator-login-submit-btn {
+  background-color: var(--color-primary);
+  color: var(--color-surface);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--glow-primary);
+  margin-top: 10px;
+}
+
+.operator-login-submit-btn:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  box-shadow: 0 6px 12px rgba(111, 78, 55, 0.25);
+  transform: translateY(-1px);
+}
+
+.operator-login-submit-btn:active:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  transform: translateY(0);
+}
+
+.operator-login-submit-btn:disabled {
+  background-color: var(--color-primary-light);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Credentials Table Wrapper */
+.credentials-reference-container {
+  margin-top: 24px;
+  border-top: 1px solid #f1f3f7;
+  padding-top: 24px;
+}
+
+.credentials-table-wrapper {
+  background-color: #fafbfc;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.credentials-reference-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  color: #495057;
+}
+
+.credentials-reference-table th {
+  background-color: #f8f9fa;
+  color: #2b3e50;
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid #dee2e6;
+  text-transform: capitalize;
+}
+
+.credentials-reference-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f3f5;
+  vertical-align: middle;
+}
+
+.credentials-reference-table tr {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.credentials-reference-table tbody tr:hover {
+  background-color: #edf2f9; /* Soft highlight for quick click feedback */
+}
+
+.credentials-reference-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Tags for Roles */
+.role-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.role-admin {
+  background-color: #eaebed;
+  color: #495057;
+}
+
+.role-kitchen {
+  background-color: #fdf2e9;
+  color: #e28743;
+}
+
+.role-display {
+  background-color: #ebfcf5;
+  color: #20c997;
 }

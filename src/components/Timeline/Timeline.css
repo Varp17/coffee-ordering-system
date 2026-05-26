@@ -1,0 +1,171 @@
+.timeline-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 1.25rem;
+  position: relative;
+  padding-bottom: 1.75rem;
+}
+
+/* Connector line */
+.timeline-connector {
+  position: absolute;
+  top: 32px;
+  left: 20px;
+  bottom: 0;
+  width: 2px;
+  background-color: var(--color-border);
+  z-index: 1;
+  transition: background-color 0.3s ease;
+}
+
+/* Color transitions on connector based on status flow */
+.timeline-status-completed .timeline-connector {
+  background-color: var(--color-primary);
+}
+
+/* Indicator Circle wrapper */
+.timeline-indicator-wrapper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 2;
+}
+
+.timeline-indicator {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--color-surface);
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.timeline-indicator-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--color-text-muted);
+  transition: all 0.3s ease;
+}
+
+.timeline-indicator-icon {
+  font-size: 1.1rem;
+}
+
+/* Content Panel */
+.timeline-content {
+  flex: 1;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.01);
+  transition: all 0.3s ease;
+  margin-top: -2px;
+}
+
+.timeline-content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.timeline-item-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.timeline-item-time {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.timeline-item-description {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* --- Status Styles Customization --- */
+
+/* 1. Completed */
+.timeline-status-completed .timeline-indicator {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.timeline-status-completed .timeline-indicator-dot {
+  background-color: var(--color-primary);
+}
+
+.timeline-status-completed .timeline-content {
+  border-color: var(--color-primary-light);
+  background-color: rgba(198, 124, 78, 0.02);
+}
+
+/* 2. Current Active */
+.timeline-status-current .timeline-indicator {
+  border-color: var(--color-primary);
+  background-color: var(--color-surface);
+  box-shadow: 0 0 0 4px rgba(198, 124, 78, 0.15);
+  animation: pulse-border 2s infinite;
+}
+
+.timeline-status-current .timeline-indicator-dot {
+  background-color: var(--color-primary);
+}
+
+.timeline-status-current .timeline-content {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 16px rgba(198, 124, 78, 0.05);
+}
+
+.timeline-status-current .timeline-item-title {
+  color: var(--color-primary);
+}
+
+/* 3. Pending / Future */
+.timeline-status-pending .timeline-indicator {
+  border-color: var(--color-border);
+  background-color: var(--color-surface-alt);
+  color: var(--color-text-muted);
+}
+
+.timeline-status-pending .timeline-indicator-dot {
+  background-color: var(--color-border);
+}
+
+.timeline-status-pending .timeline-content {
+  opacity: 0.75;
+}
+
+@keyframes pulse-border {
+  0% {
+    box-shadow: 0 0 0 0 rgba(198, 124, 78, 0.3);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(198, 124, 78, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(198, 124, 78, 0);
+  }
+}

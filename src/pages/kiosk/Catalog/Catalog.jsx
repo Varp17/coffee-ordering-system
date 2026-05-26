@@ -1,52 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import './Catalog.css';
 import Button from '../../../components/Button/Button';
-import Card from '../../../components/Card/Card';
-import api from '../../../services/api';
+import AnimatedCard from '../../../components/Motion/AnimatedCard';
+import { products as mockProducts } from '../../../data/mockData';
+import { formatCurrency } from '../../../utils/formatters';
 
-const Catalog = ({ onBack, onLogin, onCreateCustom, onCheckout }) => {
+const Catalog = ({ onBack, onLogin, onCreateCustom, onCheckout, cart, setCart }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [cart, setCart] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState(['All']);
-  const [loading, setLoading] = useState(true);
+  const [recentlyAdded, setRecentlyAdded] = useState(null);
 
-  useEffect(() => {
-    const fetchCatalog = async () => {
-      try {
-        const [productsRes, categoriesRes] = await Promise.all([
-          api.get('/products'),
-          api.get('/categories')
-        ]);
-        const fetchedProducts = productsRes.data.data || productsRes.data || [];
-        const fetchedCategories = categoriesRes.data.data || categoriesRes.data || [];
-        
-        setProducts(fetchedProducts);
-        const catNames = fetchedCategories.map(c => c.name || c);
-        setCategories(['All', ...catNames]);
-      } catch (error) {
-        console.error('Failed to fetch kiosk catalog:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCatalog();
-  }, []);
+  // Derive unique categories dynamically plus "All"
+  const categories = ['All', ...new Set(mockProducts.map(p => p.category))];
 
   const filteredProducts = selectedCategory === 'All' 
-    ? products 
-    : products.filter(p => (p.category?.name || p.category) === selectedCategory);
+    ? mockProducts 
+    : mockProducts.filter(p => p.category === selectedCategory);
 
   const addToCart = (product) => {
-    setCart([...cart, product]);
+    // Basic conversion for POS cart format
+    setCart([...cart, { ...product, name: product.title || product.name }]);
+    
+    // Tactile micro-interaction state
+    setRecentlyAdded(product.id);
+    setTimeout(() => setRecentlyAdded(null), 600);
   };
 
-  const total = cart.reduce((sum, item) => sum + item.base_price, 0);
+  const total = cart.reduce((sum, item) => sum + (item.price || 0), 0);
+
+  // Framer Motion Variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+  };
+  const itemVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    show: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+  };
 
   return (
     <div className="kiosk-catalog">
       <div className="catalog-sidebar">
-        <button className="back-btn" onClick={onBack}>← Back</button>
         <div className="categories-list">
           {categories.map(cat => (
             <button 
@@ -61,48 +55,98 @@ const Catalog = ({ onBack, onLogin, onCreateCustom, onCheckout }) => {
       </div>
 
       <div className="catalog-main">
-        <div className="catalog-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="catalog-header flex-between">
           <h2>Select Your Items</h2>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Button variant="secondary" size="small" onClick={onCreateCustom}>Custom Drink</Button>
-            <Button variant="secondary" size="small" onClick={onLogin}>Login</Button>
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button variant="outline" size="large" onClick={onCreateCustom}>✨ Custom Drink</Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button variant="secondary" size="large" onClick={onLogin}>Member Login</Button>
+            </motion.div>
           </div>
         </div>
-        <div className="products-grid">
+        
+        <motion.div 
+          className="products-grid"
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+          key={selectedCategory} // Force re-render animation when category changes
+        >
           {filteredProducts.map(product => (
-            <Card 
-              key={product.id}
-              title={product.name}
-              price={`₹${product.base_price}`}
-              imageUrl={product.image_url}
-              actionText="Add"
-              onAction={() => addToCart(product)}
-            />
+            <motion.div variants={itemVariants} key={product.id}>
+              <AnimatedCard className="kiosk-product-card" layout={false}>
+                <div 
+                  className="product-image" 
+                  style={{ backgroundImage: `url(${product.image || product.imageUrl || 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'})` }}
+                ></div>
+                <div className="product-details">
+                  <h3>{product.title || product.name}</h3>
+                  <span className="price">{formatCurrency(product.price || 0)}</span>
+                  
+                  <motion.button 
+                    whileTap={{ scale: 0.95 }}
+                    className={`btn btn-large btn-full-width ${recentlyAdded === product.id ? 'btn-success' : 'btn-primary'}`}
+                    onClick={() => addToCart(product)}
+                  >
+                    {recentlyAdded === product.id ? '✓ Added' : '+ Add to Order'}
+                  </motion.button>
+                </div>
+              </AnimatedCard>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
 
-      <div className="catalog-cart-summary glass">
+      <div className="catalog-cart-summary">
         <h3>Your Order</h3>
         <div className="cart-items">
           {cart.length === 0 ? (
-            <p className="empty-msg">No items added yet</p>
+            <p className="empty-msg">Tap 'Add to Order' to begin</p>
           ) : (
-            <ul>
-              {cart.map((item, index) => (
-                <li key={index}>
-                  <span>{item.name}</span>
-                  <span>₹{item.base_price}</span>
-                </li>
-              ))}
+            <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <AnimatePresence>
+                {cart.map((item, index) => (
+                  <motion.li 
+                    key={`${item.id}-${index}`}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                    className="cart-item-row"
+                  >
+                    <span className="cart-item-name">{item.name}</span>
+                    <span className="cart-item-price">{formatCurrency(item.price || 0)}</span>
+                  </motion.li>
+                ))}
+              </AnimatePresence>
             </ul>
           )}
         </div>
-        <div className="cart-total">
+        
+        <motion.div layout className="cart-total">
           <span>Total:</span>
-          <span>₹{total}</span>
-        </div>
-        <Button variant="primary" size="large" disabled={cart.length === 0} onClick={() => onCheckout(cart, total)}>Checkout</Button>
+          <motion.span 
+            key={total}
+            initial={{ scale: 1.1, color: 'var(--color-primary)' }}
+            animate={{ scale: 1, color: 'var(--color-text)' }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          >
+            {formatCurrency(total)}
+          </motion.span>
+        </motion.div>
+        
+        <motion.div whileHover={cart.length > 0 ? { scale: 1.02 } : {}} whileTap={cart.length > 0 ? { scale: 0.98 } : {}}>
+          <Button 
+            variant="primary" 
+            size="large" 
+            disabled={cart.length === 0} 
+            onClick={() => onCheckout(cart, total)}
+            className="btn-full-width"
+          >
+            Proceed to Checkout
+          </Button>
+        </motion.div>
       </div>
     </div>
   );

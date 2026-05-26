@@ -1,39 +1,128 @@
-import axios from 'axios';
+/* ============================================
+   BASE API SERVICE — Digital Coffee Platform
+   Real HTTP client with JWT auth, error handling,
+   and auto-logout on 401.
+   ============================================ */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+const BASE_URL = '/api/v1';
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Request Interceptor
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+class ApiClient {
+  constructor() {
+    this.baseUrl = BASE_URL;
   }
-  // If there's a store context (kiosk), we can set it
-  const storeId = localStorage.getItem('storeId');
-  if (storeId) {
-    config.headers['X-Store-Id'] = storeId;
-  }
-  return config;
-});
 
-// Response Interceptor
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      // Redirect to login based on app mode? 
-      // For now, just reload or let component handle it.
+  getToken() {
+    return localStorage.getItem('dc_token') || null;
+  }
+
+  setToken(token) {
+    if (token) {
+      localStorage.setItem('dc_token', token);
+    } else {
+      localStorage.removeItem('dc_token');
+      localStorage.removeItem('dc_user');
+      localStorage.removeItem('dc_refresh_token');
     }
-    return Promise.reject(error);
   }
-);
 
-export default api;
+  async request(endpoint, options = {}) {
+    const url = `${this.baseUrl}${endpoint}`;
+    const token = this.getToken();
+
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // Add session/store headers if present
+    const sessionId = localStorage.getItem('dc_session_id');
+    if (sessionId) headers['X-Session-Id'] = sessionId;
+    const storeId = localStorage.getItem('dc_store_id');
+    if (storeId) headers['X-Store-Id'] = storeId;
+
+    const config = {
+      method: options.method || 'GET',
+      headers,
+      ...options,
+    };
+
+    // Don't send body for GET/HEAD
+    if (options.body && config.method !== 'GET' && config.method !== 'HEAD') {
+      config.body = typeof options.body === 'string' ? options.body : JSON.stringify(options.body);
+    }
+
+    try {
+      const response = await fetch(url, config);
+
+      // Handle 401 — auto logout
+      if (response.status === 401) {
+        this.setToken(null);
+        window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+        const errData = await response.json().catch(() => ({}));
+        throw new ApiError('Session expired. Please login again.', 401, errData);
+      }
+
+      // Handle other errors
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        const message = errData.message || errData.error || `Request failed with status ${response.status}`;
+        throw new ApiError(message, response.status, errData);
+      }
+
+      // Handle empty responses
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return await response.json();
+      }
+      return { success: true };
+    } catch (err) {
+      if (err instanceof ApiError) throw err;
+      // Network error
+      throw new ApiError('Network error. Please check your connection.', 0, { originalError: err.message });
+    }
+  }
+
+  // HTTP Method wrappers
+  get(endpoint, params = {}) {
+    const query = new URLSearchParams();
+    for (const [key, val] of Object.entries(params)) {
+      if (val !== undefined && val !== null && val !== '') {
+        query.append(key, val);
+      }
+    }
+    const qs = query.toString();
+    return this.request(`${endpoint}${qs ? '?' + qs : ''}`, { method: 'GET' });
+  }
+
+  post(endpoint, data) {
+    return this.request(endpoint, { method: 'POST', body: data });
+  }
+
+  put(endpoint, data) {
+    return this.request(endpoint, { method: 'PUT', body: data });
+  }
+
+  patch(endpoint, data) {
+    return this.request(endpoint, { method: 'PATCH', body: data });
+  }
+
+  delete(endpoint) {
+    return this.request(endpoint, { method: 'DELETE' });
+  }
+}
+
+class ApiError extends Error {
+  constructor(message, status, data = {}) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.data = data;
+  }
+}
+
+export const api = new ApiClient();
+export { ApiError };

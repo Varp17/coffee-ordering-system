@@ -1,0 +1,23 @@
+.skeleton-element {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-alt) 25%,
+    var(--color-surface-hover) 37%,
+    var(--color-surface-alt) 63%
+  );
+  background-size: 400% 100%;
+  display: block;
+}
+
+.shimmer-pulse {
+  animation: skeleton-shimmer-keyframe 1.4s ease infinite;
+}
+
+@keyframes skeleton-shimmer-keyframe {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}

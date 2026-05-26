@@ -56,6 +56,31 @@ Make all four interfaces of the Coffee Ordering System (D2C, Admin, Barista, Kio
 
 ---
 
+---
+
+## Client Specifications Alignment (Sizing, Guided UI & Catalog)
+
+To align the platform with the client's commercial operations and recipe framework, the following operational constraints and UI features have been implemented:
+
+1. **Standardized Beverage Sizing**:
+   - Every customizable beverage has been restricted to exactly two cup sizes: `Small` (250ml, baseline price) and `Standard` (360ml, +₹30 price modifier).
+   - This replaces the old three-size (S/M/L) framework to streamline storefront inventories and barista cup stocks.
+
+2. **Guided Customization UI**:
+   - In ingredient customization sections (Milk Bases, Sweeteners, and Toppings), key options feature clear visual guidance flags:
+     - `Recommended` (e.g., Oat Milk, Jaggery) - Soft amber/caramel badges.
+     - `Most Preferred` (e.g., Dairy Milk, Honey, Milk Cream) - Soft green pastel badges.
+   - These indicators help guide user choice and optimize conversion rates.
+
+3. **Expanded Retail Catalog**:
+   - The D2C Storefront and Kiosk now showcase the client's expanded products:
+     - **Chilled Coffee Core**: Strong, Balanced, Subtle Notes, and South Indian Filter (70:30 chicory) extract bottles.
+     - **Combo Packs**: Available in 2-bottle, 4-bottle, and 6-bottle bundles at discount brackets.
+     - **Coffee Accessories**: Professional Measured Pourer (for exact recipe dispensing) and Premium Shaker Glass (for aerated drinks).
+     - **Merchandise**: Branded organic cotton embroidered caps and oversized heavy t-shirts.
+
+---
+
 ## Implementation Details
 
 We will edit the relevant CSS files:

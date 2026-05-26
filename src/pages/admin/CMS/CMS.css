@@ -1,111 +1,159 @@
 .cms-page {
-  padding: 40px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
 .cms-header {
-  text-align: center;
-  margin-bottom: 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .cms-title {
-  font-size: 3rem;
-  margin-bottom: 10px;
+  font-size: 2rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--color-text);
 }
 
 .cms-subtitle {
   color: var(--color-text-muted);
-  font-size: 1.1rem;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.cms-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
 }
 
 .cms-section {
-  margin-bottom: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
+
+.span-2 { grid-column: span 2; }
+.span-3 { grid-column: span 3; }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
 }
 
 .section-title {
-  font-size: 2rem;
+  font-size: 1.25rem;
+  margin: 0;
 }
 
-/* Table Styles */
-.cms-table-container {
-  overflow-x: auto;
-  border-radius: 12px;
+.banner-content-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.cms-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-.cms-table th, .cms-table td {
-  padding: 16px;
-  border-bottom: 1px solid var(--glass-border);
-}
-
-.cms-table th {
-  background: rgba(255, 255, 255, 0.05);
-  font-weight: 600;
+.banner-content-cell span {
+  font-size: 0.8rem;
   color: var(--color-text-muted);
 }
 
-.cms-table tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+.cms-tag {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-/* Status Chips */
-.status-chip {
-  padding: 4px 8px;
-  border-radius: 4px;
+.cms-tag-muted {
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+.cta-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cta-btn {
   font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.cta-link {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-family: monospace;
+}
+
+.status-chip {
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
-.status-chip.active {
-  background: rgba(40, 167, 69, 0.2);
-  color: #28a745;
+.status-chip.active { background: rgba(32, 201, 151, 0.15); color: #38d9a9; }
+.status-chip.inactive, .status-chip.draft { background: rgba(255, 255, 255, 0.1); color: var(--color-text-muted); }
+
+/* SEO Form */
+.seo-form {
+  padding: 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.status-chip.inactive {
-  background: rgba(220, 53, 69, 0.2);
-  color: #dc3545;
+.seo-form .form-group {
+  position: relative;
 }
 
-/* Action Buttons */
-.action-btn {
-  background: none;
-  border: none;
-  color: var(--color-primary);
-  cursor: pointer;
-  margin-right: 10px;
-  font-weight: 500;
-  text-decoration: underline;
+.char-count {
+  position: absolute;
+  bottom: -1.25rem;
+  right: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
 }
 
-.action-btn.edit {
-  color: #ffc107;
+/* Modal Styles */
+.cms-modal {
+  max-width: 600px;
 }
 
-.action-btn.delete {
-  color: #dc3545;
+.cms-modal-form {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.action-btn:hover {
-  opacity: 0.8;
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
 }
 
-@media (max-width: 768px) {
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+.form-section-header {
+  font-weight: 600;
+  color: var(--color-text);
+  margin-top: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 1024px) {
+  .cms-grid {
+    grid-template-columns: 1fr;
+  }
+  .span-2, .span-3 {
+    grid-column: span 1;
   }
 }

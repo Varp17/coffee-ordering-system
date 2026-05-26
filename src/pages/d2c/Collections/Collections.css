@@ -1,0 +1,220 @@
+/* Curated Collections styling */
+
+.collections-page {
+  width: 100%;
+  max-width: var(--max-width-xl);
+  margin: 0 auto;
+  padding: var(--space-40) var(--content-padding) var(--space-64) var(--content-padding);
+  animation: fadeIn var(--motion-smooth) var(--ease-out) both;
+}
+
+.collections-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.badge-curated {
+  display: inline-block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+  color: var(--color-primary);
+}
+
+.collections-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 3rem;
+  color: var(--color-text);
+  margin-bottom: 1rem;
+  font-weight: 800;
+}
+
+.collections-desc {
+  max-width: 750px;
+  margin: 0 auto;
+  color: var(--color-text-muted);
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+/* Grid */
+.collections-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+  margin-bottom: 4rem;
+}
+
+.collection-card {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.collection-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.coll-image-container {
+  position: relative;
+  height: 100%;
+  min-height: 350px;
+  overflow: hidden;
+}
+
+.coll-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.collection-card:hover .coll-image {
+  transform: scale(1.05);
+}
+
+.coll-tag {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 50px;
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.coll-details {
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.coll-card-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-text);
+  margin-bottom: 1rem;
+}
+
+.coll-description {
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.coll-divider {
+  border: 0;
+  height: 1px;
+  background: var(--color-border);
+  margin: 1.5rem 0;
+}
+
+.coll-items-preview h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  letter-spacing: 0.5px;
+  margin-bottom: 0.75rem;
+}
+
+.coll-items-preview ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.coll-items-preview li {
+  font-size: 0.95rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.coll-footer {
+  margin-top: auto;
+  padding-top: 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+.coll-price-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.price-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  letter-spacing: 0.5px;
+}
+
+.price-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.current-price {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  font-family: 'Outfit', sans-serif;
+}
+
+.original-price {
+  font-size: 1.125rem;
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+/* Mobile responsive */
+@media (max-width: 900px) {
+  .collection-card {
+    grid-template-columns: 1fr;
+  }
+  
+  .coll-image-container {
+    min-height: 250px;
+  }
+  
+  .coll-details {
+    padding: 1.5rem;
+  }
+  
+  .coll-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+  }
+  
+  .collections-title {
+    font-size: 2.25rem;
+  }
+}
+

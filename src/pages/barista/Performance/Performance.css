@@ -1,0 +1,171 @@
+.barista-performance-view {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.performance-header h2 {
+  font-size: 1.8rem;
+  color: var(--color-secondary);
+  margin: 0 0 6px 0;
+}
+
+.performance-header p {
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.kpi-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.kpi-stat-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 20px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.02);
+}
+
+.card-icon {
+  font-size: 2.2rem;
+  background-color: var(--color-surface-alt);
+  padding: 10px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50px;
+  height: 50px;
+  box-sizing: border-box;
+}
+
+.card-metrics {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-val {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--color-secondary);
+  line-height: 1.2;
+}
+
+.metric-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.perf-split-layout {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 24px;
+}
+
+@media (max-width: 992px) {
+  .perf-split-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart-wrapper-card, .waste-tracker-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.chart-wrapper-card h3, .waste-tracker-card h3 {
+  font-size: 1.2rem;
+  color: var(--color-secondary);
+  margin: 0 0 4px 0;
+}
+
+.chart-subtitle {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0 0 24px 0;
+}
+
+.barista-chart-container {
+  margin-top: 10px;
+}
+
+.waste-logs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.waste-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background-color: var(--color-bg);
+  border-radius: 10px;
+  border: 1px dashed var(--color-border);
+}
+
+.waste-item-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.waste-item-detail strong {
+  font-size: 0.95rem;
+  color: var(--color-secondary);
+}
+
+.waste-reason {
+  font-size: 0.75rem;
+  color: var(--color-error);
+}
+
+.waste-metric-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.waste-qty {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.waste-time {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.add-waste-btn {
+  width: 100%;
+  padding: 12px;
+  margin-top: 20px;
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 1px dashed var(--color-primary);
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-waste-btn:hover {
+  background-color: rgba(198, 124, 78, 0.05);
+  transform: translateY(-1px);
+}

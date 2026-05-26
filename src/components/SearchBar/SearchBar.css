@@ -1,0 +1,114 @@
+.searchbar-container {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0 1rem;
+}
+
+.searchbar-container:hover {
+  border-color: var(--color-primary-light);
+}
+
+.searchbar-container:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(198, 124, 78, 0.15), 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.searchbar-full-width {
+  display: flex;
+  width: 100%;
+}
+
+.searchbar-icon {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  user-select: none;
+  margin-right: 0.5rem;
+}
+
+.searchbar-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  min-height: 40px; /* Touch target within container */
+  padding: 0;
+}
+
+.searchbar-input::placeholder {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+/* Clear button styling */
+.searchbar-clear-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+  margin-left: 0.5rem;
+}
+
+.searchbar-clear-btn:hover {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+}
+
+/* Keyboard Shortcut Badge Hint */
+.searchbar-shortcut-hint {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  background-color: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  padding: 0.15rem 0.4rem;
+  border-radius: 5px;
+  user-select: none;
+  margin-left: 0.5rem;
+  letter-spacing: 0.05em;
+}
+
+/* --- Sizes --- */
+.searchbar-size-small {
+  border-radius: 10px;
+}
+.searchbar-size-small .searchbar-input {
+  min-height: 36px;
+  font-size: 0.8rem;
+}
+.searchbar-size-small .searchbar-icon {
+  font-size: 0.85rem;
+}
+
+.searchbar-size-medium {
+  border-radius: 12px;
+}
+
+.searchbar-size-large {
+  border-radius: 14px;
+  padding: 0 1.25rem;
+}
+.searchbar-size-large .searchbar-input {
+  min-height: 48px;
+  font-size: 0.95rem;
+}
+.searchbar-size-large .searchbar-icon {
+  font-size: 1.15rem;
+  margin-right: 0.75rem;
+}

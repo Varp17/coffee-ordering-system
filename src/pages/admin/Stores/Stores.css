@@ -1,0 +1,128 @@
+/* Multi-store command center styles */
+
+.stores-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.stores-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: var(--space-24);
+}
+
+.store-panel-card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-32);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--elevation-1);
+}
+
+.store-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-16);
+}
+
+.store-info-left {
+  display: flex;
+  gap: var(--space-16);
+}
+
+.store-geo-pin {
+  font-size: var(--font-size-h2);
+}
+
+.store-info-left h3 {
+  font-size: var(--font-size-h3);
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 var(--space-4) 0;
+}
+
+.store-address-txt {
+  font-size: var(--font-size-body);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.store-status-badge {
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: var(--space-4) var(--space-12);
+  border-radius: var(--radius-full);
+}
+
+.store-status-badge.active {
+  background-color: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.store-status-badge.suspended {
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+.store-status-badge.coming-soon {
+  background-color: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+.store-divider {
+  border: 0;
+  height: 1px;
+  background-color: var(--color-border);
+  margin: var(--space-24) 0;
+}
+
+.store-metrics-panel {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-16);
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-16);
+  margin-bottom: var(--space-24);
+}
+
+.metric-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.metric-lbl {
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+.metric-box strong {
+  font-size: var(--font-size-body-lg);
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.store-panel-actions {
+  display: flex;
+  gap: var(--space-16);
+  margin-top: auto;
+}
+
+.store-panel-actions button {
+  flex: 1;
+}
+
+@media (max-width: 480px) {
+  .store-panel-actions {
+    flex-direction: column;
+  }
+}

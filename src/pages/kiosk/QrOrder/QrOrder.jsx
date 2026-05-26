@@ -5,7 +5,7 @@ import Button from '../../../components/Button/Button';
 const QrOrder = ({ onBack }) => {
   return (
     <div className="kiosk-qr-order">
-      <div className="qr-card glass">
+      <div className="qr-card ">
         <button className="back-btn" onClick={onBack}>← Back</button>
         
         <h2>Scan to Order on Phone</h2>
@@ -30,3 +30,4 @@ const QrOrder = ({ onBack }) => {
 };
 
 export default QrOrder;
+

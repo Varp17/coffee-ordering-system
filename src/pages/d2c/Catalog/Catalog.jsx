@@ -1,79 +1,172 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Catalog.css';
 import Card from '../../../components/Card/Card';
-import api from '../../../services/api';
+import Tabs from '../../../components/Tabs/Tabs';
+import SearchBar from '../../../components/SearchBar/SearchBar';
+import Dropdown from '../../../components/Dropdown/Dropdown';
+import { cmsService } from '../../../services/cms';
+import { useCartStore } from '../../../store/useCartStore';
+import toast from 'react-hot-toast';
+import { t } from '../../../utils/i18n';
 
 const Catalog = () => {
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState(['All']);
+  const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('popular');
   const [loading, setLoading] = useState(true);
+  
+  const navigate = useNavigate();
+  const addItemToCart = useCartStore((state) => state.addItem);
+
+  const fetchCatalog = async () => {
+    try {
+      setLoading(true);
+      const params = {
+        category: selectedCategory,
+        search: searchQuery
+      };
+      const res = await cmsService.getD2CProducts(params);
+      const prodList = res.data || res || [];
+      
+      // Sort logic
+      const sorted = [...prodList].sort((a, b) => {
+        if (sortBy === 'price_asc') return a.price - b.price;
+        if (sortBy === 'price_desc') return b.price - a.price;
+        if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
+        // Default / Popular
+        return (b.review_count || 0) - (a.review_count || 0);
+      });
+
+      setProducts(sorted);
+      
+      // Load categories once at start
+      if (categories.length === 0) {
+        const uniqueCats = ['All', ...new Set(prodList.map((p) => p.category))];
+        const tabList = uniqueCats.map((cat) => {
+          const count = cat === 'All' 
+            ? prodList.length 
+            : prodList.filter((p) => p.category === cat).length;
+          return { id: cat, label: cat, count };
+        });
+        setCategories(tabList);
+      }
+    } catch (err) {
+      console.error('Failed to fetch catalog', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCatalog = async () => {
-      try {
-        const [productsRes, categoriesRes] = await Promise.all([
-          api.get('/products'),
-          api.get('/categories')
-        ]);
-        
-        // Handle potentially nested data
-        const fetchedProducts = productsRes.data.data || productsRes.data || [];
-        const fetchedCategories = categoriesRes.data.data || categoriesRes.data || [];
-        
-        setProducts(fetchedProducts);
-        
-        const catNames = fetchedCategories.map(c => c.name || c);
-        setCategories(['All', ...catNames]);
-      } catch (error) {
-        console.error('Failed to fetch catalog:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchCatalog();
-  }, []);
+  }, [sortBy, searchQuery, selectedCategory]);
 
-  const filteredProducts = selectedCategory === 'All' 
-    ? products 
-    : products.filter(p => (p.category?.name || p.category) === selectedCategory);
+  const handleAddToCart = (e, product) => {
+    e.stopPropagation();
+    const defaultVariant = product.variants && product.variants.length > 0
+      ? product.variants[0]
+      : { id: 'default', name: 'Standard', price: product.price };
+      
+    addItemToCart(product, defaultVariant, 1);
+    toast.success(`${product.title} added to cart!`);
+  };
+
+  const sortOptions = [
+    { value: 'popular', label: 'Most Popular' },
+    { value: 'rating', label: 'Top Rated' },
+    { value: 'price_asc', label: 'Price: Low to High' },
+    { value: 'price_desc', label: 'Price: High to Low' }
+  ];
 
   return (
-    <div className="catalog-page">
-      <div className="catalog-header">
-        <h1 className="catalog-title">Our <span className="text-gradient">Collection</span></h1>
-        <p className="catalog-subtitle">Browse our premium coffee concentrates and blends.</p>
+    <div className="catalog-page animate-fade-in">
+      <div className="catalog-header-section">
+        <h1 className="catalog-title">{t('catalog.titlePrefix', 'Our Specialty ')}<span className="text-gradient">{t('catalog.titleGradient', 'Collection')}</span></h1>
+        <p className="catalog-subtitle">{t('catalog.subtitle', 'Sustainably sourced, artisan roasted, and custom crafted to deliver peak flavor.')}</p>
       </div>
 
-      {/* Categories Filter */}
-      <div className="categories-container">
-        {categories.map(category => (
-          <button 
-            key={category}
-            className={`category-chip ${selectedCategory === category ? 'active' : ''}`}
-            onClick={() => setSelectedCategory(category)}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
-
-      {/* Products Grid */}
-      {loading ? (
-        <div className="loading-spinner">Loading...</div>
-      ) : (
-        <div className="catalog-grid">
-          {filteredProducts.map(product => (
-            <Card 
-              key={product.id}
-              title={product.title || product.name}
-              description={product.description}
-              price={product.base_price ? `₹${product.base_price}` : product.price}
-              imageUrl={product.imageUrl || product.image_url}
-              onAction={() => alert(`Added ${product.title || product.name} to cart!`)}
+      {/* Control bar (Search, Filter, Sort) */}
+      <div className="catalog-controls">
+        <div className="search-filter-row">
+          <div className="catalog-search-wrapper">
+            <SearchBar 
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search arabica beans, smooth concentrates, DIY kits..."
             />
+          </div>
+          <div className="catalog-sort-wrapper">
+            <Dropdown 
+              options={sortOptions}
+              value={sortBy}
+              onChange={setSortBy}
+              placeholder="Sort by"
+              label="Sort By"
+            />
+          </div>
+        </div>
+
+        {/* Category Tabs */}
+        {categories.length > 0 && (
+          <div className="catalog-tabs-container">
+            <Tabs 
+              tabs={categories}
+              activeTab={selectedCategory}
+              onChange={setSelectedCategory}
+              variant="segmented"
+              size="medium"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Grid listing */}
+      {loading ? (
+        <div className="products-grid">
+          {Array(6).fill(0).map((_, idx) => (
+            <Card key={idx} isLoading={true} />
           ))}
-          {filteredProducts.length === 0 && <p>No products found in this category.</p>}
+        </div>
+      ) : products.length > 0 ? (
+        <div className="products-grid">
+          {products.map((product) => (
+            <div 
+              key={product.uuid || product.id} 
+              className="clickable-card-wrapper"
+              onClick={() => navigate(`/catalog/${product.slug || product.uuid || product.id}`)}
+            >
+              <Card 
+                title={product.title}
+                description={product.short_description || product.description}
+                price={product.price}
+                imageUrl={product.image_url}
+                rating={product.rating || 4.8}
+                reviewCount={product.review_count || 120}
+                tags={product.tags}
+                inStock={product.in_stock === 1 || product.in_stock === true}
+                actionText="Add to Cart"
+                onAction={(e) => handleAddToCart(e, product)}
+              />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="catalog-empty-wrapper">
+          <span className="empty-emoji">☕</span>
+          <h3>{t('catalog.noBeverages', 'No beverages found')}</h3>
+          <p>{t('catalog.noMatchesPrefix', 'We couldn\'t find any coffee matching "')}{searchQuery}{t('catalog.noMatchesSuffix', '" under "')}{selectedCategory}{t('catalog.noMatchesEnd', '".')}</p>
+          <button 
+            className="clear-filters-btn"
+            onClick={() => {
+              setSearchQuery('');
+              setSelectedCategory('All');
+            }}
+          >
+            {t('catalog.clearFilters', 'Clear Filters & Search')}
+          </button>
         </div>
       )}
     </div>

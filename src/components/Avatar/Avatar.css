@@ -1,0 +1,121 @@
+.avatar-container {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  position: relative;
+  user-select: none;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  color: #FFFFFF;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+.avatar-clickable {
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.avatar-clickable:hover {
+  transform: scale(1.08);
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: -0.02em;
+}
+
+/* --- Sizes --- */
+.avatar-size-small {
+  width: 32px;
+  height: 32px;
+  font-size: 0.75rem;
+}
+.avatar-size-medium {
+  width: 44px;
+  height: 44px;
+  font-size: 0.95rem;
+}
+.avatar-size-large {
+  width: 60px;
+  height: 60px;
+  font-size: 1.25rem;
+}
+.avatar-size-xl {
+  width: 80px;
+  height: 80px;
+  font-size: 1.75rem;
+}
+
+/* --- Background Color Variants --- */
+.avatar-color-primary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+}
+.avatar-color-secondary {
+  background: linear-gradient(135deg, var(--color-secondary), #595654);
+}
+.avatar-color-success {
+  background: linear-gradient(135deg, var(--color-success), #80d3ab);
+}
+.avatar-color-warning {
+  background: linear-gradient(135deg, var(--color-warning), #ffcd60);
+}
+.avatar-color-error {
+  background: linear-gradient(135deg, var(--color-error), #ff8475);
+}
+.avatar-color-info {
+  background: linear-gradient(135deg, var(--color-info), #88c0ee);
+}
+
+/* --- Status Badge Indicator --- */
+.avatar-status-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  border-radius: 50%;
+  border: 2px solid var(--color-surface);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Status dots sizes */
+.avatar-size-small .avatar-status-badge {
+  width: 9px;
+  height: 9px;
+}
+.avatar-size-medium .avatar-status-badge {
+  width: 12px;
+  height: 12px;
+}
+.avatar-size-large .avatar-status-badge {
+  width: 15px;
+  height: 15px;
+}
+.avatar-size-xl .avatar-status-badge {
+  width: 18px;
+  height: 18px;
+  border-width: 3px;
+}
+
+/* Status colors mapping */
+.badge-status-online {
+  background-color: var(--color-success);
+}
+.badge-status-offline {
+  background-color: var(--color-text-muted);
+}
+.badge-status-busy {
+  background-color: var(--color-error);
+}
+.badge-status-idle {
+  background-color: var(--color-warning);
+}

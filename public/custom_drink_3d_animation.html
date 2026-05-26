@@ -1,0 +1,479 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: transparent; font-family: var(--font-sans); }
+  .scene { width: 100%; max-width: 680px; margin: 0 auto; padding: 1rem 0; }
+  .title { font-size: 18px; font-weight: 500; color: var(--color-text-primary); text-align: center; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: var(--color-text-secondary); text-align: center; margin-bottom: 1.5rem; }
+  canvas { display: block; margin: 0 auto; border-radius: var(--border-radius-lg); }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 1.25rem; }
+  .ctrl-btn { font-size: 13px; font-weight: 500; padding: 7px 18px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; transition: background 0.15s; }
+  .ctrl-btn:hover { background: var(--color-background-secondary); }
+  .ctrl-btn.active { background: #c8955c; color: #fff; border-color: #c8955c; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 1rem; }
+  .leg-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--color-text-secondary); }
+  .leg-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .step-label { text-align: center; font-size: 13px; color: var(--color-text-secondary); margin-top: 8px; min-height: 20px; }
+</style>
+
+<div class="scene">
+  <h2 class="sr-only">3D animated coffee drink builder showing ingredient pouring animation</h2>
+  <div class="title">Live drink animation</div>
+  <div class="subtitle">Watch your custom brew being assembled</div>
+  <canvas id="c" width="640" height="420"></canvas>
+  <div class="step-label" id="stepLabel">Cold Brew base pouring...</div>
+  <div class="controls">
+    <button class="ctrl-btn active" id="btnPlay">Replay animation</button>
+    <button class="ctrl-btn" id="btnBase">Change: Espresso</button>
+    <button class="ctrl-btn" id="btnMilk">Change: Oat Milk</button>
+    <button class="ctrl-btn" id="btnDrizzle">Toggle drizzle</button>
+  </div>
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:#3b1a05"></div>Cold Brew base</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#e8c89a"></div>Almond milk</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#f5e6c8"></div>Vanilla foam</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#7b3a10"></div>Chocolate drizzle</div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 640, H = 420;
+
+let animTime = 0;
+let animId = null;
+let drizzle = true;
+
+const config = {
+  base: { label: 'Cold Brew', color: '#3b1a05', dark: '#1a0a02', foam: false },
+  milk: { label: 'Almond Milk', color: '#e8c89a', foam: true },
+  syrup: { label: 'Vanilla', color: '#f0d98c' },
+  topping: { label: 'Chocolate Drizzle', color: '#7b3a10' }
+};
+
+const STEPS = [
+  { end: 0.2, label: `Pouring ${config.base.label} base...` },
+  { end: 0.45, label: `Adding ${config.milk.label}...` },
+  { end: 0.62, label: `Pouring Vanilla syrup...` },
+  { end: 0.78, label: `Settling layers...` },
+  { end: 0.92, label: `Adding foam & drizzle...` },
+  { end: 1.0, label: `Your ${config.base.label} is ready! ☕` }
+];
+
+function ease(t) { return t < 0.5 ? 2*t*t : -1+(4-2*t)*t; }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+
+// Cup geometry
+const CX = W/2, CY = 280;
+const CUP_W_TOP = 130, CUP_W_BOT = 96, CUP_H = 160;
+const CUP_X = CX - CUP_W_TOP/2, CUP_Y = CY - CUP_H;
+
+function cupLeft(y) {
+  const t = (y - CUP_Y) / CUP_H;
+  return CX - (CUP_W_TOP/2 - (CUP_W_TOP - CUP_W_BOT)/2 * t);
+}
+function cupRight(y) {
+  const t = (y - CUP_Y) / CUP_H;
+  return CX + (CUP_W_TOP/2 - (CUP_W_TOP - CUP_W_BOT)/2 * t);
+}
+
+function drawCupOutline() {
+  ctx.save();
+  // Shadow
+  ctx.shadowColor = 'rgba(0,0,0,0.18)';
+  ctx.shadowBlur = 18;
+  ctx.shadowOffsetY = 8;
+  // Cup body
+  ctx.beginPath();
+  ctx.moveTo(CX - CUP_W_TOP/2, CUP_Y);
+  ctx.lineTo(CX - CUP_W_BOT/2, CUP_Y + CUP_H);
+  ctx.lineTo(CX + CUP_W_BOT/2, CUP_Y + CUP_H);
+  ctx.lineTo(CX + CUP_W_TOP/2, CUP_Y);
+  ctx.closePath();
+  ctx.fillStyle = '#f0ece6';
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#c8b89a';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Handle
+  ctx.beginPath();
+  ctx.arc(CX + CUP_W_BOT/2 + 26, CUP_Y + CUP_H - 54, 26, -1.1, 1.1);
+  ctx.strokeStyle = '#c8b89a';
+  ctx.lineWidth = 10;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(CX + CUP_W_BOT/2 + 26, CUP_Y + CUP_H - 54, 26, -1.1, 1.1);
+  ctx.strokeStyle = '#f0ece6';
+  ctx.lineWidth = 6;
+  ctx.stroke();
+
+  // Rim highlight
+  ctx.beginPath();
+  ctx.moveTo(CX - CUP_W_TOP/2 + 4, CUP_Y + 5);
+  ctx.lineTo(CX + CUP_W_TOP/2 - 4, CUP_Y + 5);
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+// Clip to cup interior
+function clipToCup() {
+  ctx.beginPath();
+  ctx.moveTo(CX - CUP_W_TOP/2 + 2, CUP_Y + 1);
+  ctx.lineTo(CX - CUP_W_BOT/2 + 1, CUP_Y + CUP_H - 1);
+  ctx.lineTo(CX + CUP_W_BOT/2 - 1, CUP_Y + CUP_H - 1);
+  ctx.lineTo(CX + CUP_W_TOP/2 - 2, CUP_Y + 1);
+  ctx.closePath();
+  ctx.clip();
+}
+
+function liquidTop(fillFraction) {
+  return CUP_Y + CUP_H - fillFraction * CUP_H;
+}
+
+function drawLiquidLayer(yTop, yBot, color1, color2) {
+  const leftTop = cupLeft(yTop), rightTop = cupRight(yTop);
+  const leftBot = cupLeft(yBot), rightBot = cupRight(yBot);
+  const grad = ctx.createLinearGradient(leftTop, 0, rightTop, 0);
+  grad.addColorStop(0, shadeColor(color1, -20));
+  grad.addColorStop(0.3, color1);
+  grad.addColorStop(0.7, color2 || color1);
+  grad.addColorStop(1, shadeColor(color1, -20));
+  ctx.beginPath();
+  ctx.moveTo(leftTop, yTop);
+  ctx.lineTo(leftBot, yBot);
+  ctx.lineTo(rightBot, yBot);
+  ctx.lineTo(rightTop, yTop);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+}
+
+function shadeColor(hex, amt) {
+  let r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  r = clamp(r+amt,0,255); g = clamp(g+amt,0,255); b = clamp(b+amt,0,255);
+  return '#' + [r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+
+// Pour stream
+let pourParticles = [];
+function emitPour(color, tx, count) {
+  for(let i=0;i<count;i++){
+    pourParticles.push({
+      x: tx + (Math.random()-0.5)*6,
+      y: CUP_Y - 60 - Math.random()*20,
+      vy: 3 + Math.random()*2,
+      vx: (Math.random()-0.5)*0.5,
+      r: 2 + Math.random()*3,
+      color, alpha: 0.9
+    });
+  }
+}
+function updateParticles(fillY) {
+  pourParticles = pourParticles.filter(p => {
+    p.y += p.vy; p.x += p.vx; p.vy += 0.3;
+    if(p.y > fillY) { p.alpha -= 0.15; }
+    return p.alpha > 0;
+  });
+}
+function drawParticles() {
+  pourParticles.forEach(p => {
+    ctx.save();
+    ctx.globalAlpha = p.alpha;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+// Drizzle path
+function drawDrizzle(alpha) {
+  if (!drizzle) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = config.topping.color;
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  const tw = cupRight(CUP_Y + 30) - cupLeft(CUP_Y + 30);
+  const tx = cupLeft(CUP_Y + 30);
+  ctx.beginPath();
+  for(let i=0;i<3;i++){
+    const ox = tx + tw*0.2 + i*(tw*0.22);
+    ctx.moveTo(ox, CUP_Y - 40);
+    ctx.bezierCurveTo(ox+10, CUP_Y+0, ox-10, CUP_Y+20, ox+5, CUP_Y+38);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Foam bubbles
+function drawFoam(yTop, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  const lx = cupLeft(yTop), rx = cupRight(yTop);
+  const mid = (lx+rx)/2, w = rx-lx;
+  const foamGrad = ctx.createLinearGradient(lx, 0, rx, 0);
+  foamGrad.addColorStop(0, 'rgba(245,235,215,0.6)');
+  foamGrad.addColorStop(0.5, 'rgba(255,248,238,0.95)');
+  foamGrad.addColorStop(1, 'rgba(245,235,215,0.6)');
+  ctx.beginPath();
+  ctx.ellipse(mid, yTop+2, w/2-2, 10, 0, 0, Math.PI*2);
+  ctx.fillStyle = foamGrad;
+  ctx.fill();
+  // Bubbles
+  [[mid-22, yTop+1, 5],[mid, yTop-3, 6],[mid+20, yTop+0, 4],[mid-8, yTop+4, 3],[mid+8, yTop+3, 3]].forEach(([bx,by,br])=>{
+    ctx.beginPath();
+    ctx.arc(bx, by, br, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,250,242,0.4)';
+    ctx.fill();
+  });
+  ctx.restore();
+}
+
+// Stream (vertical pour line)
+function drawStream(x, fromY, toY, color, width) {
+  const sg = ctx.createLinearGradient(x-width/2, 0, x+width/2, 0);
+  sg.addColorStop(0, 'rgba(255,255,255,0.1)');
+  sg.addColorStop(0.5, color);
+  sg.addColorStop(1, 'rgba(0,0,0,0.2)');
+  ctx.beginPath();
+  ctx.moveTo(x-width/2, fromY);
+  ctx.bezierCurveTo(x-width/2+1, (fromY+toY)/2, x-width/2-1, (fromY+toY)/2, x-width/2, toY);
+  ctx.lineTo(x+width/2, toY);
+  ctx.bezierCurveTo(x+width/2-1, (fromY+toY)/2, x+width/2+1, (fromY+toY)/2, x+width/2, fromY);
+  ctx.closePath();
+  ctx.fillStyle = sg;
+  ctx.fill();
+}
+
+// Saucer
+function drawSaucer() {
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(CX, CUP_Y+CUP_H+10, 80, 12, 0, 0, Math.PI*2);
+  ctx.fillStyle = '#e8ddd0';
+  ctx.fill();
+  ctx.strokeStyle = '#c8b89a';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Label above cup
+function drawLabel(text, alpha) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.font = '500 13px ' + getComputedStyle(document.body).getPropertyValue('--font-sans').trim() || 'sans-serif';
+  ctx.fillStyle = '#c8955c';
+  ctx.textAlign = 'center';
+  ctx.fillText(text, CX, CUP_Y - 90);
+  ctx.restore();
+}
+
+function render(t) {
+  ctx.clearRect(0, 0, W, H);
+  const p = clamp(t, 0, 1);
+
+  // --- Compute layers ---
+  // Step 0: base 0–0.2 → fill to 55%
+  // Step 1: milk 0.2–0.45 → fill to 82%
+  // Step 2: syrup 0.45–0.62 → thin amber layer
+  // Step 3: settle 0.62–0.78
+  // Step 4: foam+drizzle 0.78–1.0
+
+  const baseFill = clamp((p - 0) / 0.2, 0, 1);
+  const milkFill = clamp((p - 0.2) / 0.25, 0, 1);
+  const syrupFill = clamp((p - 0.45) / 0.17, 0, 1);
+  const foamAlpha = clamp((p - 0.78) / 0.15, 0, 1);
+  const drizzleAlpha = clamp((p - 0.86) / 0.12, 0, 1);
+
+  const baseLayerFrac = 0.55 * ease(baseFill);
+  const milkLayerFrac = 0.27 * ease(milkFill);
+  const syrupLayerFrac = 0.06 * ease(syrupFill);
+
+  const totalFrac = baseLayerFrac + milkLayerFrac + syrupLayerFrac;
+  const fillTop = liquidTop(totalFrac);
+
+  // Draw saucer
+  drawSaucer();
+
+  // Draw fill inside cup (clipped)
+  ctx.save();
+  clipToCup();
+
+  // Base layer
+  if (baseLayerFrac > 0.001) {
+    const bBot = CUP_Y + CUP_H;
+    const bTop = liquidTop(baseLayerFrac);
+    drawLiquidLayer(bTop, bBot, config.base.color, config.base.dark);
+    // Liquid surface shimmer
+    ctx.beginPath();
+    ctx.moveTo(cupLeft(bTop)+2, bTop);
+    ctx.lineTo(cupRight(bTop)-2, bTop);
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+  // Milk layer
+  if (milkLayerFrac > 0.001) {
+    const mBot = liquidTop(baseLayerFrac);
+    const mTop = liquidTop(baseLayerFrac + milkLayerFrac);
+    drawLiquidLayer(mTop, mBot, config.milk.color, shadeColor(config.milk.color, 15));
+    ctx.beginPath();
+    ctx.moveTo(cupLeft(mTop)+2, mTop);
+    ctx.lineTo(cupRight(mTop)-2, mTop);
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  // Syrup layer (amber stripe)
+  if (syrupLayerFrac > 0.001) {
+    const sBot = liquidTop(baseLayerFrac + milkLayerFrac);
+    const sTop = liquidTop(baseLayerFrac + milkLayerFrac + syrupLayerFrac);
+    drawLiquidLayer(sTop, sBot, config.syrup.color, shadeColor(config.syrup.color, -10));
+  }
+
+  ctx.restore();
+
+  // Foam (on top, above clip)
+  if (foamAlpha > 0 && totalFrac > 0.05) {
+    drawFoam(fillTop, foamAlpha);
+  }
+
+  // Cup outline over fill
+  drawCupOutline();
+
+  // Drizzle on top
+  drawDrizzle(drizzleAlpha);
+
+  // --- Pouring streams ---
+  // Base pour
+  if (p > 0 && p < 0.2) {
+    const sp = p / 0.2;
+    const streamAlpha = sp < 0.9 ? 1 : (1-p)/0.1;
+    ctx.save(); ctx.globalAlpha = clamp(streamAlpha,0,1);
+    drawStream(CX - 10, CUP_Y - 70, fillTop, config.base.color, 7);
+    ctx.restore();
+    if (Math.random() < 0.6) emitPour(config.base.color, CX-10, 2);
+    drawLabel('Pouring Cold Brew...', 1);
+  }
+  // Milk pour
+  if (p >= 0.2 && p < 0.45) {
+    const sp = (p-0.2)/0.25;
+    const streamAlpha = sp < 0.9 ? 1 : 1-(sp-0.9)/0.1;
+    ctx.save(); ctx.globalAlpha = clamp(streamAlpha,0,1);
+    drawStream(CX + 15, CUP_Y - 70, fillTop, config.milk.color, 6);
+    ctx.restore();
+    if (Math.random() < 0.6) emitPour(config.milk.color, CX+15, 2);
+    drawLabel('Adding Almond Milk...', 1);
+  }
+  // Syrup pour
+  if (p >= 0.45 && p < 0.62) {
+    const sp = (p-0.45)/0.17;
+    const streamAlpha = sp < 0.85 ? 1 : 1-(sp-0.85)/0.15;
+    ctx.save(); ctx.globalAlpha = clamp(streamAlpha,0,1);
+    drawStream(CX, CUP_Y - 80, fillTop, config.syrup.color, 4);
+    ctx.restore();
+    if (Math.random() < 0.5) emitPour(config.syrup.color, CX, 1);
+    drawLabel('Drizzling Vanilla syrup...', 1);
+  }
+
+  updateParticles(fillTop + 5);
+  drawParticles();
+
+  // Step label
+  let stepLabel = STEPS[STEPS.length-1].label;
+  for(const s of STEPS) { if(p <= s.end) { stepLabel = s.label; break; } }
+  document.getElementById('stepLabel').textContent = stepLabel;
+
+  // Shine reflection on glass
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  ctx.beginPath();
+  ctx.moveTo(CX - CUP_W_TOP/2 + 10, CUP_Y + 10);
+  ctx.lineTo(CX - CUP_W_BOT/2 + 8, CUP_Y + CUP_H - 10);
+  ctx.lineWidth = 10;
+  ctx.strokeStyle = '#fff';
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  ctx.restore();
+
+  // Final label
+  if (p >= 0.95) {
+    ctx.save();
+    const fa = clamp((p-0.95)/0.05, 0, 1);
+    ctx.globalAlpha = fa;
+    ctx.font = '500 15px sans-serif';
+    ctx.fillStyle = '#c8955c';
+    ctx.textAlign = 'center';
+    ctx.fillText('My Custom Brew  ·  ₹215', CX, CUP_Y - 85);
+    ctx.restore();
+  }
+}
+
+let startTime = null;
+const DURATION = 4200;
+
+function animate(ts) {
+  if (!startTime) startTime = ts;
+  const elapsed = ts - startTime;
+  animTime = clamp(elapsed / DURATION, 0, 1);
+  render(animTime);
+  if (animTime < 1) {
+    animId = requestAnimationFrame(animate);
+  }
+}
+
+function startAnim() {
+  if (animId) cancelAnimationFrame(animId);
+  pourParticles = [];
+  startTime = null;
+  animId = requestAnimationFrame(animate);
+}
+
+startAnim();
+
+document.getElementById('btnPlay').onclick = function() { startAnim(); };
+
+document.getElementById('btnBase').onclick = function() {
+  const opts = [
+    { label: 'Espresso', color: '#1a0800', dark: '#0d0400' },
+    { label: 'Cold Brew', color: '#3b1a05', dark: '#1a0a02' },
+    { label: 'Matcha', color: '#5a7a3a', dark: '#3a5a20' }
+  ];
+  const cur = opts.findIndex(o => o.label === config.base.label);
+  const next = opts[(cur + 1) % opts.length];
+  Object.assign(config.base, next);
+  this.textContent = 'Change: ' + (opts[(opts.findIndex(o=>o.label===next.label)+1)%opts.length].label);
+  startAnim();
+};
+
+document.getElementById('btnMilk').onclick = function() {
+  const opts = [
+    { label: 'Whole Milk', color: '#f5efe0' },
+    { label: 'Oat Milk', color: '#d4b87a' },
+    { label: 'Almond Milk', color: '#e8c89a' }
+  ];
+  const cur = opts.findIndex(o => o.label === config.milk.label);
+  const next = opts[(cur + 1) % opts.length];
+  Object.assign(config.milk, next);
+  this.textContent = 'Change: ' + (opts[(opts.findIndex(o=>o.label===next.label)+1)%opts.length].label);
+  startAnim();
+};
+
+document.getElementById('btnDrizzle').onclick = function() {
+  drizzle = !drizzle;
+  this.textContent = drizzle ? 'Toggle drizzle' : 'Drizzle: off';
+  startAnim();
+};
+</script>

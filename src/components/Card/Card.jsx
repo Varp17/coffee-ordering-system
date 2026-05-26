@@ -1,20 +1,104 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ShoppingBag, Eye } from 'lucide-react';
 import './Card.css';
 import Button from '../Button/Button';
+import StarRating from '../StarRating/StarRating';
+import { formatCurrency } from '../../utils/formatters';
 
+const Card = ({ 
+  id,
+  title, 
+  description, 
+  price,
+  originalPrice,
+  imageUrl, 
+  actionText = "Add to Cart", 
+  onAction,
+  tags = [],
+  rating = null,
+  reviewCount = 0,
+  inStock = true,
+  isLoading = false
+}) => {
+  const navigate = useNavigate();
 
-const Card = ({ title, description, price, imageUrl, actionText = "Add to Cart", onAction }) => {
-  return (
-    <div className="card glass">
-      <div className="card-image-container">
-        <img src={imageUrl || 'https://images.unsplash.com/photo-1541167760496-1628856ab772?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=80'} alt={title} className="card-image" />
+  if (isLoading) {
+    return (
+      <div className="product-card product-card-skeleton">
+        <div className="card-image-skeleton shimmer"></div>
+        <div className="card-content-skeleton">
+          <div className="skeleton-line skeleton-title shimmer"></div>
+          <div className="skeleton-line skeleton-text shimmer"></div>
+          <div className="skeleton-line skeleton-short shimmer"></div>
+          <div className="skeleton-footer-row">
+            <div className="skeleton-line skeleton-price shimmer"></div>
+            <div className="skeleton-line skeleton-button shimmer"></div>
+          </div>
+        </div>
       </div>
+    );
+  }
+
+  const hasDiscount = originalPrice && originalPrice > price;
+  const discountPercent = hasDiscount ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
+
+  return (
+    <div className={`product-card ${!inStock ? 'card-out-of-stock' : ''}`}>
+      {/* Image Container */}
+      <div className="card-image-container" onClick={() => id && navigate(`/catalog/${id}`)}>
+        <img 
+          src={imageUrl || 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=500&q=80'} 
+          alt={title} 
+          className="card-image" 
+          loading="lazy"
+        />
+        <div className="card-image-overlay">
+          <button className="quick-view-btn" onClick={(e) => { e.stopPropagation(); id && navigate(`/catalog/${id}`); }}>
+            <Eye size={16} />
+            <span>Quick View</span>
+          </button>
+        </div>
+        {/* Tags */}
+        <div className="card-tags">
+          {tags.map((tag) => (
+            <span key={tag} className={`card-tag tag-${tag}`}>
+              {tag}
+            </span>
+          ))}
+          {hasDiscount && (
+            <span className="card-tag tag-sale">-{discountPercent}%</span>
+          )}
+        </div>
+        {!inStock && <div className="out-of-stock-overlay">Out of Stock</div>}
+      </div>
+
+      {/* Content */}
       <div className="card-content">
+        {rating && (
+          <StarRating rating={rating} count={reviewCount} size={12} />
+        )}
+        
         <h3 className="card-title">{title}</h3>
-        {description && <p className="card-description">{description}</p>}
+        
+        {description && <p className="card-description line-clamp-2">{description}</p>}
+
         <div className="card-footer">
-          <span className="card-price">{price}</span>
-          <Button variant="primary" size="small" onClick={onAction}>{actionText}</Button>
+          <div className="card-pricing">
+            <span className="card-price">{formatCurrency(price)}</span>
+            {hasDiscount && (
+              <span className="card-original-price">{formatCurrency(originalPrice)}</span>
+            )}
+          </div>
+          <Button 
+            variant={inStock ? "primary" : "outline"} 
+            size="small" 
+            onClick={(e) => { e.stopPropagation(); onAction?.(); }}
+            disabled={!inStock}
+            icon={inStock ? <ShoppingBag size={13} /> : null}
+          >
+            {inStock ? actionText : "Unavailable"}
+          </Button>
         </div>
       </div>
     </div>

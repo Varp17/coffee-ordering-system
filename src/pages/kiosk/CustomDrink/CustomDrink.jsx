@@ -1,261 +1,403 @@
-import React, { useState, useEffect } from 'react';
+import { useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Check, Coffee, Droplets, IceCreamBowl, Milk, Sparkles } from 'lucide-react';
 import './CustomDrink.css';
-import Button from '../../../components/Button/Button';
+import { formatCurrency } from '../../../utils/formatters';
+import AnimatedCounter from '../../../components/Motion/AnimatedCounter';
+
+const ASSETS = {
+  finishedLatte: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=900&auto=format&fit=crop&q=88',
+  icedLatte: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=900&auto=format&fit=crop&q=88',
+  coldBrew: 'https://images.unsplash.com/photo-1461023235402-278239b9b242?w=900&auto=format&fit=crop&q=88',
+  matcha: 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?w=900&auto=format&fit=crop&q=88',
+};
+
+const INGREDIENTS = {
+  sizes: [
+    { id: 'S', name: 'Small', label: '250 ml', price: -30 },
+    { id: 'M', name: 'Regular', label: '350 ml', price: 0 },
+    { id: 'L', name: 'Large', label: '450 ml', price: 40 },
+  ],
+  bases: [
+    { id: 'espresso', name: 'Espresso', price: 150, color: '#3b1f13', image: ASSETS.icedLatte },
+    { id: 'cold-brew', name: 'Cold Brew', price: 180, color: '#221007', image: ASSETS.coldBrew },
+    { id: 'matcha', name: 'Matcha', price: 200, color: '#78945b', image: ASSETS.matcha },
+  ],
+  milks: [
+    { id: 'whole', name: 'Whole Milk', price: 0, visual: '#fff6e8' },
+    { id: 'oat', name: 'Oat Milk', price: 60, visual: '#f4e4c7' },
+    { id: 'almond', name: 'Almond Milk', price: 50, visual: '#f8ead7' },
+    { id: 'none', name: 'No Milk', price: 0, visual: 'transparent' },
+  ],
+  syrups: [
+    { id: 'vanilla', name: 'Vanilla Syrup', price: 30 },
+    { id: 'caramel', name: 'Caramel Syrup', price: 30 },
+    { id: 'hazelnut', name: 'Hazelnut Syrup', price: 40 },
+  ],
+  toppings: [
+    { id: 'whipped-cream', name: 'Whipped Cream', price: 25, kind: 'foam' },
+    { id: 'cold-foam', name: 'Cold Foam', price: 35, kind: 'foam' },
+    { id: 'ice', name: 'Ice', price: 0, kind: 'ice' },
+  ],
+};
+
+const defaultSelection = {
+  size: 'M',
+  base: 'espresso',
+  milk: 'whole',
+  syrups: [],
+  toppings: [],
+};
+
+const getById = (items, id) => items.find((item) => item.id === id);
+
+function DrinkPreview({ selection, total, stage, isAdding }) {
+  const base = getById(INGREDIENTS.bases, selection.base);
+  const milk = getById(INGREDIENTS.milks, selection.milk);
+  const hasMilk = milk?.id !== 'none';
+  const hasIce = selection.toppings.includes('ice');
+  const hasFoam = selection.toppings.some((id) => getById(INGREDIENTS.toppings, id)?.kind === 'foam');
+  const hasSyrup = selection.syrups.length > 0;
+
+  return (
+    <div className="drink-preview-stage">
+      <motion.div
+        className="asset-backdrop"
+        key={base?.id}
+        initial={{ opacity: 0, scale: 1.03 }}
+        animate={{ opacity: 0.24, scale: 1 }}
+        transition={{ duration: 0.35 }}
+        style={{ backgroundImage: `url(${base?.image || ASSETS.finishedLatte})` }}
+      />
+
+      <motion.div className="real-drink-compositor" layout>
+        <motion.img
+          key={base?.id}
+          className="drink-photo"
+          src={base?.image || ASSETS.finishedLatte}
+          alt=""
+          initial={{ opacity: 0, scale: 1.04 }}
+          animate={{ opacity: 1, scale: selection.size === 'S' ? 0.94 : selection.size === 'L' ? 1.05 : 1 }}
+          transition={{ duration: 0.35 }}
+        />
+        <div className="photo-glass-highlight" />
+        <AnimatePresence>
+          {stage >= 1 && (
+            <motion.div
+              className="pour-stream coffee-stream"
+              initial={{ scaleY: 0, opacity: 0 }}
+              animate={{ scaleY: 1, opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35 }}
+            />
+          )}
+          {stage >= 2 && hasMilk && (
+            <motion.div
+              className="pour-stream milk-stream"
+              initial={{ scaleY: 0, opacity: 0 }}
+              animate={{ scaleY: 1, opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.35 }}
+            />
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {hasMilk && stage >= 1 && (
+            <motion.div
+              className="photo-milk-swirl"
+              key={`${base?.id}-${milk.id}-swirl`}
+              initial={{ opacity: 0, scale: 0.82, rotate: -10 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.45 }}
+            />
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {hasSyrup && (
+            <motion.div className="photo-syrup" initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} />
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {hasFoam && hasMilk && (
+            <motion.div className="photo-foam" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} />
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {hasIce && (
+            <motion.div className="ice-cubes photo-ice-cubes" initial="hidden" animate="show" exit="hidden">
+              {[0, 1, 2, 3].map((cube) => (
+                <motion.span
+                  key={cube}
+                  className={`ice-cube cube-${cube}`}
+                  variants={{
+                    hidden: { opacity: 0, y: -110, rotate: -25 },
+                    show: { opacity: 1, y: 0, rotate: cube * 13 - 16 },
+                  }}
+                  transition={{ type: 'spring', stiffness: 220, damping: 17, delay: cube * 0.07 }}
+                />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+      </motion.div>
+
+      <div className="preview-step-card">
+        <span>Step {stage + 1}</span>
+        <strong>{stage === 0 ? 'Pick the base' : stage === 1 ? 'Blend the milk' : 'Finish the drink'}</strong>
+      </div>
+
+      <motion.div className="live-price-tag" key={total} initial={{ y: 12 }} animate={{ y: 0 }}>
+        <AnimatedCounter value={total} />
+      </motion.div>
+
+      <AnimatePresence>
+        {isAdding && (
+          <motion.div
+            className="added-confirmation"
+            initial={{ opacity: 0, scale: 0.86 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.92 }}
+          >
+            <Check size={34} />
+            Added to order
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function OptionButton({ active, disabled, item, onClick, icon: Icon }) {
+  return (
+    <button className={`option-chip ${active ? 'active' : ''}`} disabled={disabled} onClick={onClick}>
+      {Icon && <Icon size={20} strokeWidth={2.2} />}
+      <span>{item.name}</span>
+      {item.label && <span className="chip-meta">{item.label}</span>}
+      {item.price !== 0 && <span className="chip-price">{item.price > 0 ? '+' : ''}{formatCurrency(item.price)}</span>}
+    </button>
+  );
+}
+
+function StepPanel({ stage, selection, selectBase, selectMilk, setSelection, toggleListItem }) {
+  if (stage === 0) {
+    return (
+      <motion.div className="ingredient-category focused" layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+        <h3>Choose Base <span className="category-selection-hint">Required</span></h3>
+        <div className="options-chip-list">
+          {INGREDIENTS.bases.map((item) => (
+            <OptionButton key={item.id} item={item} active={selection.base === item.id} onClick={() => selectBase(item.id)} icon={Coffee} />
+          ))}
+        </div>
+      </motion.div>
+    );
+  }
+
+  if (stage === 1) {
+    return (
+      <motion.div className="ingredient-category focused" layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+        <h3>Choose Milk <span className="category-selection-hint">Required</span></h3>
+        <div className="options-chip-list">
+          {INGREDIENTS.milks.map((item) => {
+            const disabled = selection.base === 'matcha' && !['oat', 'none'].includes(item.id);
+            return (
+              <OptionButton
+                key={item.id}
+                item={item}
+                active={selection.milk === item.id}
+                disabled={disabled}
+                onClick={() => selectMilk(item.id)}
+                icon={item.id === 'none' ? Droplets : Milk}
+              />
+            );
+          })}
+        </div>
+        {selection.base === 'matcha' && (
+          <p className="rule-note">Matcha pairs with oat milk by default; dairy options are disabled for this recipe.</p>
+        )}
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div className="finish-grid" layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+      <div className="ingredient-category compact">
+        <h3>Cup Size</h3>
+        <div className="options-chip-list">
+          {INGREDIENTS.sizes.map((item) => (
+            <OptionButton key={item.id} item={item} active={selection.size === item.id} onClick={() => setSelection((prev) => ({ ...prev, size: item.id }))} />
+          ))}
+        </div>
+      </div>
+
+      <div className="ingredient-category focused">
+        <h3>Add Syrups <span className="category-selection-hint">Optional</span></h3>
+        <div className="options-chip-list">
+          {INGREDIENTS.syrups.map((item) => (
+            <OptionButton key={item.id} item={item} active={selection.syrups.includes(item.id)} onClick={() => toggleListItem('syrups', item.id)} icon={Sparkles} />
+          ))}
+        </div>
+      </div>
+
+      <div className="ingredient-category">
+        <h3>Add Toppings <span className="category-selection-hint">Optional</span></h3>
+        <div className="options-chip-list">
+          {INGREDIENTS.toppings.map((item) => {
+            const disabled = selection.milk === 'none' && item.kind === 'foam';
+            return (
+              <OptionButton
+                key={item.id}
+                item={item}
+                active={selection.toppings.includes(item.id)}
+                disabled={disabled}
+                onClick={() => toggleListItem('toppings', item.id)}
+                icon={item.kind === 'ice' ? IceCreamBowl : Sparkles}
+              />
+            );
+          })}
+        </div>
+        {selection.milk === 'none' && <p className="rule-note">Foam toppings need milk and are unavailable for black drinks.</p>}
+      </div>
+    </motion.div>
+  );
+}
 
 const CustomDrink = ({ onBack, onAddToCart }) => {
   const [drinkName, setDrinkName] = useState('My Custom Brew');
-  const [selectedIngredients, setSelectedIngredients] = useState({
-    base: 'Espresso',
-    milk: 'Whole Milk',
-    syrups: [],
-    toppings: []
-  });
-  
-  const [freeDiscardAvailable, setFreeDiscardAvailable] = useState(true);
+  const [stage, setStage] = useState(0);
+  const [isAdding, setIsAdding] = useState(false);
+  const [selection, setSelection] = useState(defaultSelection);
 
-  const ingredients = {
-    bases: [
-      { id: 1, name: 'Espresso', price: 100 },
-      { id: 2, name: 'Cold Brew', price: 120 },
-      { id: 3, name: 'Matcha', price: 150 }
-    ],
-    milks: [
-      { id: 1, name: 'Whole Milk', price: 0 },
-      { id: 2, name: 'Oat Milk', price: 50 },
-      { id: 3, name: 'Almond Milk', price: 50 }
-    ],
-    syrups: [
-      { id: 1, name: 'Vanilla', price: 30 },
-      { id: 2, name: 'Caramel', price: 30 },
-      { id: 3, name: 'Hazelnut', price: 30 }
-    ],
-    toppings: [
-      { id: 1, name: 'Whipped Cream', price: 20 },
-      { id: 2, name: 'Chocolate Drizzle', price: 15 },
-      { id: 3, name: 'Cinnamon Dust', price: 10 }
-    ]
+  const base = getById(INGREDIENTS.bases, selection.base);
+  const milk = getById(INGREDIENTS.milks, selection.milk);
+  const requiredSelectionsMade = Boolean(base && milk && selection.size);
+
+  const total = useMemo(() => {
+    const sizePrice = getById(INGREDIENTS.sizes, selection.size)?.price || 0;
+    const basePrice = getById(INGREDIENTS.bases, selection.base)?.price || 0;
+    const milkPrice = getById(INGREDIENTS.milks, selection.milk)?.price || 0;
+    const syrupsPrice = selection.syrups.reduce((sum, id) => sum + (getById(INGREDIENTS.syrups, id)?.price || 0), 0);
+    const toppingsPrice = selection.toppings.reduce((sum, id) => sum + (getById(INGREDIENTS.toppings, id)?.price || 0), 0);
+    return Math.max(0, sizePrice + basePrice + milkPrice + syrupsPrice + toppingsPrice);
+  }, [selection]);
+
+  const selectBase = (id) => {
+    setSelection((prev) => ({
+      ...prev,
+      base: id,
+      milk: id === 'matcha' && !['oat', 'none'].includes(prev.milk) ? 'oat' : prev.milk,
+    }));
+    setStage(1);
   };
 
-  // Conditional Mapping Simulation
-  useEffect(() => {
-    if (selectedIngredients.base === 'Matcha' && selectedIngredients.milk !== 'Oat Milk') {
-      setSelectedIngredients({
-        ...selectedIngredients,
-        milk: 'Oat Milk'
-      });
-      alert('Matcha is best paired with Oat Milk. We have selected it for you!');
-    }
-  }, [selectedIngredients.base]);
-
-  const calculateTotal = () => {
-    let total = 0;
-    const base = ingredients.bases.find(b => b.name === selectedIngredients.base);
-    const milk = ingredients.milks.find(m => m.name === selectedIngredients.milk);
-    
-    if (base) total += base.price;
-    if (milk) total += milk.price;
-    
-    selectedIngredients.syrups.forEach(s => {
-      const syrup = ingredients.syrups.find(item => item.name === s);
-      if (syrup) total += syrup.price;
-    });
-    
-    selectedIngredients.toppings.forEach(t => {
-      const topping = ingredients.toppings.find(item => item.name === t);
-      if (topping) total += topping.price;
-    });
-    
-    return total;
+  const selectMilk = (id) => {
+    setSelection((prev) => ({ ...prev, milk: id, toppings: id === 'none' ? prev.toppings.filter((toppingId) => getById(INGREDIENTS.toppings, toppingId)?.kind !== 'foam') : prev.toppings }));
+    setStage(2);
   };
 
-  const toggleSyrup = (name) => {
-    if (selectedIngredients.syrups.includes(name)) {
-      setSelectedIngredients({
-        ...selectedIngredients,
-        syrups: selectedIngredients.syrups.filter(s => s !== name)
-      });
-    } else {
-      setSelectedIngredients({
-        ...selectedIngredients,
-        syrups: [...selectedIngredients.syrups, name]
-      });
-    }
+  const toggleListItem = (key, id) => {
+    setSelection((prev) => ({
+      ...prev,
+      [key]: prev[key].includes(id) ? prev[key].filter((itemId) => itemId !== id) : [...prev[key], id],
+    }));
+    setStage(2);
   };
 
-  const toggleTopping = (name) => {
-    if (selectedIngredients.toppings.includes(name)) {
-      setSelectedIngredients({
-        ...selectedIngredients,
-        toppings: selectedIngredients.toppings.filter(t => t !== name)
-      });
-    } else {
-      setSelectedIngredients({
-        ...selectedIngredients,
-        toppings: [...selectedIngredients.toppings, name]
-      });
-    }
-  };
+  const addToOrder = () => {
+    if (stage < 2 || !requiredSelectionsMade || isAdding) return;
 
-  const handleDiscard = () => {
-    if (freeDiscardAvailable) {
-      setFreeDiscardAvailable(false);
-      setSelectedIngredients({
-        base: 'Espresso',
-        milk: 'Whole Milk',
-        syrups: [],
-        toppings: []
-      });
-      setDrinkName('My Custom Brew');
-      alert('Your 1 free discard has been used. Starting over!');
-    } else {
-      alert('You have already used your free discard for this session.');
-    }
-  };
+    const cleanName = drinkName.trim() || `Custom ${base.name}`;
+    const customization = {
+      size: selection.size,
+      base: base.name,
+      milk: milk.name,
+      syrups: selection.syrups.map((id) => getById(INGREDIENTS.syrups, id)?.name).filter(Boolean),
+      toppings: selection.toppings.map((id) => getById(INGREDIENTS.toppings, id)?.name).filter(Boolean),
+    };
 
-  const handleShare = () => {
-    alert(`Sharing "${drinkName}" via WhatsApp! Includes recipe and location.`);
+    setIsAdding(true);
+    window.setTimeout(() => {
+      onAddToCart({
+        id: `custom-${Date.now()}`,
+        name: cleanName,
+        price: total,
+        qty: 1,
+        isCustom: true,
+        customization,
+      });
+    }, 650);
   };
 
   return (
     <div className="kiosk-custom-drink">
-      <div className="custom-main">
-        <button className="back-btn" onClick={onBack}>← Back</button>
-        <h2>Create Your Custom Drink</h2>
-        
-        {/* Naming Section */}
-        <div className="naming-section glass">
-          <label>Name Your Creation:</label>
-          <input 
-            type="text" 
-            value={drinkName} 
-            onChange={(e) => setDrinkName(e.target.value)}
+      <aside className="custom-preview-panel">
+        <DrinkPreview selection={selection} total={total} stage={stage} isAdding={isAdding} />
+      </aside>
+
+      <section className="custom-main">
+        <div className="custom-title-row">
+          <div>
+            <span className="eyebrow">Your Own Drink</span>
+            <h2>Build a custom coffee</h2>
+          </div>
+          <button className="text-back-btn" onClick={onBack}>Back to menu</button>
+        </div>
+
+        <div className="naming-section">
+          <label htmlFor="custom-drink-name">Drink name</label>
+          <input
+            id="custom-drink-name"
+            type="text"
+            maxLength={36}
+            value={drinkName}
+            onChange={(event) => setDrinkName(event.target.value)}
             className="drink-name-input"
+            onFocus={(event) => event.target.select()}
           />
         </div>
 
-        {/* Ingredients Selection */}
-        <div className="ingredients-grid">
-          {/* Base */}
-          <div className="ingredient-category glass">
-            <h3>Choose Base</h3>
-            <div className="options-list">
-              {ingredients.bases.map(b => (
-                <button 
-                  key={b.id} 
-                  className={`option-btn ${selectedIngredients.base === b.name ? 'active' : ''}`}
-                  onClick={() => setSelectedIngredients({...selectedIngredients, base: b.name})}
-                >
-                  <span>{b.name}</span>
-                  <span>+₹{b.price}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Milk */}
-          <div className="ingredient-category glass">
-            <h3>Choose Milk</h3>
-            <div className="options-list">
-              {ingredients.milks.map(m => (
-                <button 
-                  key={m.id} 
-                  className={`option-btn ${selectedIngredients.milk === m.name ? 'active' : ''}`}
-                  onClick={() => setSelectedIngredients({...selectedIngredients, milk: m.name})}
-                  disabled={selectedIngredients.base === 'Matcha' && m.name !== 'Oat Milk'}
-                  style={{ opacity: selectedIngredients.base === 'Matcha' && m.name !== 'Oat Milk' ? 0.5 : 1 }}
-                >
-                  <span>{m.name}</span>
-                  <span>+₹{m.price}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Syrups */}
-          <div className="ingredient-category glass">
-            <h3>Add Syrups</h3>
-            <div className="options-list">
-              {ingredients.syrups.map(s => (
-                <button 
-                  key={s.id} 
-                  className={`option-btn ${selectedIngredients.syrups.includes(s.name) ? 'active' : ''}`}
-                  onClick={() => toggleSyrup(s.name)}
-                >
-                  <span>{s.name}</span>
-                  <span>+₹{s.price}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Toppings */}
-          <div className="ingredient-category glass">
-            <h3>Add Toppings</h3>
-            <div className="options-list">
-              {ingredients.toppings.map(t => (
-                <button 
-                  key={t.id} 
-                  className={`option-btn ${selectedIngredients.toppings.includes(t.name) ? 'active' : ''}`}
-                  onClick={() => toggleTopping(t.name)}
-                >
-                  <span>{t.name}</span>
-                  <span>+₹{t.price}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+        <div className="builder-stepper" aria-label="Customization progress">
+          {['Base', 'Milk', 'Finish'].map((label, index) => (
+            <button key={label} className={`step-pill ${stage >= index ? 'active' : ''}`} onClick={() => setStage(index)}>
+              {index + 1}. {label}
+            </button>
+          ))}
         </div>
-      </div>
 
-      {/* Summary Sidebar */}
-      <div className="custom-summary glass">
-        <h3>Summary</h3>
-        <div className="summary-details">
-          <div className="summary-item">
-            <span className="label">Name:</span>
-            <span className="value">{drinkName}</span>
-          </div>
-          <div className="summary-item">
-            <span className="label">Base:</span>
-            <span className="value">{selectedIngredients.base}</span>
-          </div>
-          <div className="summary-item">
-            <span className="label">Milk:</span>
-            <span className="value">{selectedIngredients.milk}</span>
-          </div>
-          {selectedIngredients.syrups.length > 0 && (
-            <div className="summary-item">
-              <span className="label">Syrups:</span>
-              <span className="value">{selectedIngredients.syrups.join(', ')}</span>
-            </div>
+        <div className="ingredients-flow">
+          <AnimatePresence mode="wait">
+            <StepPanel
+              key={stage}
+              stage={stage}
+              selection={selection}
+              selectBase={selectBase}
+              selectMilk={selectMilk}
+              setSelection={setSelection}
+              toggleListItem={toggleListItem}
+            />
+          </AnimatePresence>
+        </div>
+
+        <div className="build-actions">
+          <button className="step-nav-btn" disabled={stage === 0 || isAdding} onClick={() => setStage((current) => Math.max(0, current - 1))}>Back</button>
+          {stage < 2 && (
+            <button className="step-nav-btn primary-step" onClick={() => setStage((current) => Math.min(2, current + 1))}>Next</button>
           )}
-          {selectedIngredients.toppings.length > 0 && (
-            <div className="summary-item">
-              <span className="label">Toppings:</span>
-              <span className="value">{selectedIngredients.toppings.join(', ')}</span>
-            </div>
-          )}
+          <div className="action-total">
+            <span>Total</span>
+            <strong>{formatCurrency(total)}</strong>
+          </div>
+          <motion.button
+            whileTap={requiredSelectionsMade ? { scale: 0.98 } : {}}
+            className="add-order-btn"
+            disabled={stage < 2 || !requiredSelectionsMade || isAdding}
+            onClick={addToOrder}
+          >
+            {isAdding ? 'Adding...' : stage < 2 ? 'Finish Steps' : 'Add to Order'}
+          </motion.button>
         </div>
-        
-        <div className="total-section">
-          <span>Total Price:</span>
-          <span className="total-price">₹{calculateTotal()}</span>
-        </div>
-
-        <div className="discard-section" style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>
-          {freeDiscardAvailable ? (
-            <p>🎁 1 Free Discard Available</p>
-          ) : (
-            <p style={{ color: 'var(--color-primary)' }}>Free discard used</p>
-          )}
-          <Button variant="secondary" size="small" onClick={handleDiscard} style={{ marginTop: '5px' }}>Discard & Reset</Button>
-        </div>
-
-        <div className="action-buttons" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <Button variant="primary" size="large" onClick={() => onAddToCart({ name: drinkName, price: calculateTotal(), ingredients: selectedIngredients })}>Add to Cart</Button>
-          <Button variant="secondary" size="large" onClick={handleShare}>📲 Share via WhatsApp</Button>
-        </div>
-      </div>
+      </section>
     </div>
   );
 };

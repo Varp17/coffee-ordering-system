@@ -1,0 +1,90 @@
+.badge-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: max-content;
+  user-select: none;
+}
+
+/* Style variants */
+.badge-style-pill {
+  border-radius: 30px;
+}
+
+.badge-style-dot {
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0;
+  color: var(--color-text) !important;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.badge-dot-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Color mappings */
+.badge-variant-primary {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  border: 1px solid rgba(198, 124, 78, 0.15);
+}
+.badge-variant-primary .badge-dot-indicator {
+  background-color: var(--color-primary);
+}
+
+.badge-variant-info {
+  background-color: #E6F3FC;
+  color: var(--color-info);
+  border: 1px solid rgba(91, 155, 213, 0.15);
+}
+.badge-variant-info .badge-dot-indicator {
+  background-color: var(--color-info);
+}
+
+.badge-variant-success {
+  background-color: #E2F5EC;
+  color: var(--color-success);
+  border: 1px solid rgba(76, 175, 130, 0.15);
+}
+.badge-variant-success .badge-dot-indicator {
+  background-color: var(--color-success);
+}
+
+.badge-variant-warning {
+  background-color: #FEF3D6;
+  color: var(--color-warning);
+  border: 1px solid rgba(245, 166, 35, 0.15);
+}
+.badge-variant-warning .badge-dot-indicator {
+  background-color: var(--color-warning);
+}
+
+.badge-variant-error {
+  background-color: #FCE8E6;
+  color: var(--color-error);
+  border: 1px solid rgba(231, 76, 60, 0.15);
+}
+.badge-variant-error .badge-dot-indicator {
+  background-color: var(--color-error);
+}
+
+.badge-variant-neutral {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+.badge-variant-neutral .badge-dot-indicator {
+  background-color: var(--color-text-muted);
+}

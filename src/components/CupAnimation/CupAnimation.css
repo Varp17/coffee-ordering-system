@@ -1,0 +1,9 @@
+.cup-animation-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cup-animation-wrap canvas {
+  border-radius: var(--radius-md);
+}
