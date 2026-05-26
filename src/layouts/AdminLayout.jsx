@@ -16,13 +16,13 @@ const AdminLayout = () => {
 
   React.useEffect(() => {
     if (!user) {
-      navigate('/admin/login');
+      navigate('/');
     }
   }, [user, navigate]);
 
   const handleLogout = () => {
     logout();
-    navigate('/admin/login');
+    navigate('/');
   };
 
   const getPageTitle = () => {

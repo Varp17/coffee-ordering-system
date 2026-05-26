@@ -600,8 +600,13 @@ html {
 
 /* Sticky headers and sidebars max sizing */
 .admin-sidebar {
-  max-width: 220px !important;
-  width: 220px !important;
+  max-width: 220px;
+  width: 220px;
+}
+
+.sidebar-collapsed .admin-sidebar {
+  max-width: 72px !important;
+  width: 72px !important;
 }
 
 .admin-panel-header {

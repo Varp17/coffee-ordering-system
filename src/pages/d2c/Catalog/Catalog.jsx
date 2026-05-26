@@ -88,6 +88,16 @@ const Catalog = () => {
         <p className="catalog-subtitle">{t('catalog.subtitle', 'Sustainably sourced, artisan roasted, and custom crafted to deliver peak flavor.')}</p>
       </div>
 
+      {/* Promotional Custom Drink Banner */}
+      <div className="custom-coffee-promo-banner" onClick={() => navigate('/store/custom')}>
+        <div className="promo-left">
+          <span className="promo-tag">NEW FEATURE</span>
+          <h2>🧪 Custom Beverage Laboratory</h2>
+          <p>Experiment with double espresso shots, specialty oat/almond milks, vanilla syrups, and silky cold foams. Craft your own signature blend, save it, and share it with friends!</p>
+        </div>
+        <button className="promo-btn">Start Designing ➔</button>
+      </div>
+
       {/* Control bar (Search, Filter, Sort) */}
       <div className="catalog-controls">
         <div className="search-filter-row">

@@ -65,6 +65,7 @@ import { useNavigate } from 'react-router-dom';
 import { useKioskStore } from './store/useKioskStore';
 import { useOrderStore } from './store/useOrderStore';
 import { useAuthStore } from './store/useAuthStore';
+import { useCartStore } from './store/useCartStore';
 
 function App() {
   const navigate = useNavigate();
@@ -133,10 +134,34 @@ function App() {
         <Route path="collections" element={<Collections />} />
         <Route path="success" element={<OrderSuccess />} />
         <Route path="login" element={<CustomerLogin />} />
+        <Route path="custom" element={
+          <KioskCustomDrink
+            onBack={() => navigate('/store/catalog')}
+            onAddToCart={(customDrink) => {
+              const cartStore = useCartStore.getState();
+              const customProduct = {
+                id: customDrink.id,
+                name: customDrink.name,
+                image_url: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=900&auto=format&fit=crop&q=88',
+                description: `Customized base: ${customDrink.customization.base}, milk: ${customDrink.customization.milk}`,
+                base_price: customDrink.price,
+                is_custom: true,
+                customization: customDrink.customization
+              };
+              const customVariant = {
+                id: 'custom-variant',
+                name: customDrink.customization.size,
+                price: customDrink.price
+              };
+              cartStore.addItem(customProduct, customVariant, 1);
+              navigate('/store/cart');
+            }}
+          />
+        } />
       </Route>
 
       {/* ── 2. Admin Command Center ── */}
-      <Route path="/admin/login" element={<Login onLogin={() => {}} />} />
+      <Route path="/admin/login" element={<Navigate to="/" replace />} />
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<Dashboard />} />
         <Route path="orders" element={<Orders />} />

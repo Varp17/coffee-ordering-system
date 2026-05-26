@@ -8,6 +8,7 @@ import Badge from '../../../components/Badge/Badge';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useCartStore } from '../../../store/useCartStore';
 import { d2cService } from '../../../services/d2cService';
+import { customDrinkService } from '../../../services/customDrinks';
 import { formatCurrency, formatDate } from '../../../utils/formatters';
 import toast from 'react-hot-toast';
 
@@ -20,6 +21,8 @@ const Profile = () => {
   const [customerOrders, setCustomerOrders] = useState([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [favorites, setFavorites] = useState([]);
+  const [isLoadingFavorites, setIsLoadingFavorites] = useState(false);
 
   const loadCustomerOrders = async () => {
     if (!user) return;
@@ -35,11 +38,109 @@ const Profile = () => {
     }
   };
 
+  const loadFavorites = async () => {
+    setIsLoadingFavorites(true);
+    try {
+      const res = await customDrinkService.list();
+      const list = res.data || res || [];
+      setFavorites(list);
+    } catch (err) {
+      console.error('Failed to load favorites:', err);
+    } finally {
+      setIsLoadingFavorites(false);
+    }
+  };
+
+  const handleAddCustomToCart = (drink) => {
+    try {
+      const recipe = typeof drink.ingredients === 'string' ? JSON.parse(drink.ingredients) : drink.ingredients;
+      
+      const baseName = recipe.some(i => i.ingredient_id === 1) ? 'Cold Brew' : 'Espresso';
+      const milkName = recipe.some(i => i.ingredient_id === 4) ? 'Whole Milk' :
+                       recipe.some(i => i.ingredient_id === 5) ? 'Oat Milk' :
+                       recipe.some(i => i.ingredient_id === 6) ? 'Almond Milk' : 'No Milk';
+      
+      const customProduct = {
+        id: drink.uuid,
+        name: drink.name,
+        image_url: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=900&auto=format&fit=crop&q=88',
+        description: `Customized base: ${baseName}, milk: ${milkName}`,
+        base_price: parseFloat(drink.total_price),
+        is_custom: true,
+        customization: {
+          base: baseName,
+          milk: milkName,
+          syrups: [],
+          toppings: []
+        }
+      };
+      
+      const customVariant = {
+        id: 'custom-variant',
+        name: 'Regular',
+        price: parseFloat(drink.total_price)
+      };
+      
+      addItemToCart(customProduct, customVariant, 1);
+      toast.success(`"${drink.name}" added to your cart! 🛒`);
+    } catch (err) {
+      toast.error('Failed to add custom drink to cart.');
+    }
+  };
+
+  const handleShareCustomDrink = (drink) => {
+    const shareUrl = `${window.location.origin}/store/custom?import=${drink.uuid}`;
+    navigator.clipboard.writeText(shareUrl);
+    toast.success('Share link copied to clipboard! Share it via WhatsApp or QR code! 🔗');
+  };
+
+  const handleDeleteCustomDrink = async (uuid) => {
+    try {
+      await customDrinkService.delete(uuid);
+      toast.success('Custom drink removed from favorites.');
+      loadFavorites();
+    } catch (err) {
+      toast.error('Failed to delete custom drink.');
+    }
+  };
+
+  const getIngredientsText = (ingredients) => {
+    try {
+      const list = typeof ingredients === 'string' ? JSON.parse(ingredients) : ingredients;
+      if (!Array.isArray(list)) return 'Custom Blend';
+      
+      const mapping = {
+        1: 'Cold Brew Concentrate',
+        2: 'Espresso Shot',
+        4: 'Whole Milk',
+        5: 'Oat Milk',
+        6: 'Almond Milk',
+        7: 'Soy Milk',
+        9: 'Vanilla Syrup',
+        10: 'Caramel Syrup',
+        11: 'Hazelnut Syrup',
+        14: 'Whipped Cream',
+        20: 'Cold Foam',
+        17: 'Ice'
+      };
+
+      return list.map(i => mapping[i.ingredient_id] || `Ingredient #${i.ingredient_id}`).join(', ');
+    } catch (e) {
+      return 'Custom Blend';
+    }
+  };
+
   useEffect(() => {
     if (user) {
       loadCustomerOrders();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user && activeTab === 'favorites') {
+      loadFavorites();
+    }
+  }, [user, activeTab]);
 
   // If not logged in, display login prompt
   if (!user) {
@@ -236,27 +337,39 @@ const Profile = () => {
         {/* 3. FAVORITES TAB */}
         {activeTab === 'favorites' && (
           <div className="favorites-tab-grid animate-fade-in">
-            <div className="favorite-drink-card">
-              <span className="fav-star">⭐</span>
-              <h3>Vikram's Monday Fuel</h3>
-              <p>Vanilla Cold Brew with Oat Milk, regular sugar, extra ice.</p>
-              <Button variant="primary" size="small" onClick={() => {
-                toast.success('Favorite Fuel added to cart!');
-              }}>
-                Add to Cart
-              </Button>
-            </div>
-            
-            <div className="favorite-drink-card">
-              <span className="fav-star">⭐</span>
-              <h3>Afternoon Espresso Rush</h3>
-              <p>Double Shot Hot Cappuccino with Coconut Milk, light chocolate dust.</p>
-              <Button variant="primary" size="small" onClick={() => {
-                toast.success('Espresso Rush added to cart!');
-              }}>
-                Add to Cart
-              </Button>
-            </div>
+            {isLoadingFavorites ? (
+              <p style={{ gridColumn: '1/-1', textAlign: 'center', padding: '2rem', color: 'var(--color-text-secondary)' }}>
+                Loading custom creations...
+              </p>
+            ) : favorites.length > 0 ? (
+              favorites.map((drink) => (
+                <div key={drink.uuid} className="favorite-drink-card">
+                  <span className="fav-star">⭐</span>
+                  <h3>{drink.name}</h3>
+                  <p>{getIngredientsText(drink.ingredients)}</p>
+                  <span className="favorite-drink-price">Total: {formatCurrency(drink.total_price)}</span>
+                  <div className="favorite-ctas" style={{ marginTop: '1rem', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <Button variant="primary" size="small" onClick={() => handleAddCustomToCart(drink)}>
+                      Add to Cart 🛒
+                    </Button>
+                    <Button variant="outline" size="small" onClick={() => handleShareCustomDrink(drink)}>
+                      Share Link 🔗
+                    </Button>
+                    <Button variant="danger" size="small" onClick={() => handleDeleteCustomDrink(drink.uuid)}>
+                      Delete 🗑️
+                    </Button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="empty-history-box" style={{ gridColumn: '1/-1' }}>
+                <span>🧪</span>
+                <p>No customized coffee creations found in your profile favorites yet.</p>
+                <Button variant="primary" size="medium" onClick={() => navigate('/store/custom')}>
+                  Build Your Custom Coffee ☕
+                </Button>
+              </div>
+            )}
           </div>
         )}
 

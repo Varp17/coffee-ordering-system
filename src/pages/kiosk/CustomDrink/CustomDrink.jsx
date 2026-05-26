@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, Coffee, Droplets, IceCreamBowl, Milk, Sparkles } from 'lucide-react';
+import { Check, Coffee, Droplets, IceCreamBowl, Milk, Sparkles, Star, Share2 } from 'lucide-react';
 import './CustomDrink.css';
 import { formatCurrency } from '../../../utils/formatters';
 import AnimatedCounter from '../../../components/Motion/AnimatedCounter';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { customDrinkService } from '../../../services/customDrinks';
+import toast from 'react-hot-toast';
 
 const ASSETS = {
   finishedLatte: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=900&auto=format&fit=crop&q=88',
@@ -268,6 +271,109 @@ const CustomDrink = ({ onBack, onAddToCart }) => {
   const [stage, setStage] = useState(0);
   const [isAdding, setIsAdding] = useState(false);
   const [selection, setSelection] = useState(defaultSelection);
+  const { isAuthenticated } = useAuthStore();
+  const [importingInfo, setImportingInfo] = useState(null);
+  const [isSavingFavorite, setIsSavingFavorite] = useState(false);
+
+  useEffect(() => {
+    const loadSharedDrink = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const sharedId = params.get('import') || params.get('custom');
+      if (sharedId) {
+        try {
+          const res = await customDrinkService.getById(sharedId);
+          if (res && res.ingredients) {
+            const recipe = typeof res.ingredients === 'string' ? JSON.parse(res.ingredients) : res.ingredients;
+            
+            // Map ingredients back to selected visual options
+            const newSelection = { ...defaultSelection };
+            
+            // Base
+            if (recipe.some(i => i.ingredient_id === 1)) newSelection.base = 'cold-brew';
+            else if (recipe.some(i => i.ingredient_id === 2)) newSelection.base = 'espresso';
+            
+            // Milk
+            if (recipe.some(i => i.ingredient_id === 4)) newSelection.milk = 'whole';
+            else if (recipe.some(i => i.ingredient_id === 5)) newSelection.milk = 'oat';
+            else if (recipe.some(i => i.ingredient_id === 6)) newSelection.milk = 'almond';
+            else newSelection.milk = 'none';
+
+            // Syrups
+            const syrups = [];
+            if (recipe.some(i => i.ingredient_id === 9)) syrups.push('vanilla');
+            if (recipe.some(i => i.ingredient_id === 10)) syrups.push('caramel');
+            if (recipe.some(i => i.ingredient_id === 11)) syrups.push('hazelnut');
+            newSelection.syrups = syrups;
+
+            // Toppings
+            const toppings = [];
+            if (recipe.some(i => i.ingredient_id === 14)) toppings.push('whipped-cream');
+            if (recipe.some(i => i.ingredient_id === 20)) toppings.push('cold-foam');
+            if (recipe.some(i => i.ingredient_id === 17)) toppings.push('ice');
+            newSelection.toppings = toppings;
+
+            setSelection(newSelection);
+            setDrinkName(res.name);
+            setImportingInfo(`Importing Shared Coffee: "${res.name}"`);
+            setStage(2);
+            toast.success(`Loaded shared coffee recipe: "${res.name}"! ☕`);
+          }
+        } catch (err) {
+          console.error('Failed to import custom drink:', err);
+          toast.error('Could not load the shared coffee configuration.');
+        }
+      }
+    };
+    loadSharedDrink();
+  }, []);
+
+  const handleSaveFavorite = async () => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to save custom creations to your favorites! ⭐');
+      return;
+    }
+    
+    setIsSavingFavorite(true);
+    try {
+      const baseProductId = selection.base === 'cold-brew' ? 8 : 9; // 8 = Custom Cold Brew, 9 = Custom Latte
+      const ingredientsList = [];
+      
+      // Base
+      if (selection.base === 'cold-brew') {
+        ingredientsList.push({ ingredient_id: 1, quantity: 120 });
+      } else {
+        ingredientsList.push({ ingredient_id: 2, quantity: 60 });
+      }
+
+      // Milk
+      if (selection.milk === 'whole') ingredientsList.push({ ingredient_id: 4, quantity: 150 });
+      else if (selection.milk === 'oat') ingredientsList.push({ ingredient_id: 5, quantity: 150 });
+      else if (selection.milk === 'almond') ingredientsList.push({ ingredient_id: 6, quantity: 150 });
+
+      // Syrups
+      if (selection.syrups.includes('vanilla')) ingredientsList.push({ ingredient_id: 9, quantity: 15 });
+      if (selection.syrups.includes('caramel')) ingredientsList.push({ ingredient_id: 10, quantity: 15 });
+      if (selection.syrups.includes('hazelnut')) ingredientsList.push({ ingredient_id: 11, quantity: 15 });
+
+      // Toppings
+      if (selection.toppings.includes('whipped-cream')) ingredientsList.push({ ingredient_id: 14, quantity: 30 });
+      if (selection.toppings.includes('cold-foam')) ingredientsList.push({ ingredient_id: 20, quantity: 20 });
+      if (selection.toppings.includes('ice')) ingredientsList.push({ ingredient_id: 17, quantity: 5 });
+
+      await customDrinkService.create({
+        base_product_id: baseProductId,
+        name: drinkName.trim() || 'My Favorite Brew',
+        ingredients: ingredientsList
+      });
+
+      toast.success('Creation saved to your Favorites! ⭐');
+    } catch (err) {
+      console.error('Failed to save favorite:', err);
+      toast.error(err.message || 'Error saving custom drink to favorites.');
+    } finally {
+      setIsSavingFavorite(false);
+    }
+  };
 
   const base = getById(INGREDIENTS.bases, selection.base);
   const milk = getById(INGREDIENTS.milks, selection.milk);
@@ -280,6 +386,31 @@ const CustomDrink = ({ onBack, onAddToCart }) => {
     const syrupsPrice = selection.syrups.reduce((sum, id) => sum + (getById(INGREDIENTS.syrups, id)?.price || 0), 0);
     const toppingsPrice = selection.toppings.reduce((sum, id) => sum + (getById(INGREDIENTS.toppings, id)?.price || 0), 0);
     return Math.max(0, sizePrice + basePrice + milkPrice + syrupsPrice + toppingsPrice);
+  }, [selection]);
+
+  const activeReceiptItems = useMemo(() => {
+    const list = [];
+    const baseItem = getById(INGREDIENTS.bases, selection.base);
+    if (baseItem) {
+      list.push({ name: `${baseItem.name} Base`, price: baseItem.price });
+    }
+    const sizeItem = getById(INGREDIENTS.sizes, selection.size);
+    if (sizeItem) {
+      list.push({ name: `${sizeItem.name} Size`, price: sizeItem.price });
+    }
+    const milkItem = getById(INGREDIENTS.milks, selection.milk);
+    if (milkItem && milkItem.id !== 'none') {
+      list.push({ name: milkItem.name, price: milkItem.price });
+    }
+    selection.syrups.forEach(id => {
+      const item = getById(INGREDIENTS.syrups, id);
+      if (item) list.push({ name: item.name, price: item.price });
+    });
+    selection.toppings.forEach(id => {
+      const item = getById(INGREDIENTS.toppings, id);
+      if (item) list.push({ name: item.name, price: item.price });
+    });
+    return list;
   }, [selection]);
 
   const selectBase = (id) => {
@@ -336,6 +467,13 @@ const CustomDrink = ({ onBack, onAddToCart }) => {
       </aside>
 
       <section className="custom-main">
+        {importingInfo && (
+          <div className="importing-banner">
+            <Sparkles size={16} />
+            <span>{importingInfo}</span>
+          </div>
+        )}
+
         <div className="custom-title-row">
           <div>
             <span className="eyebrow">Your Own Drink</span>
@@ -379,15 +517,48 @@ const CustomDrink = ({ onBack, onAddToCart }) => {
           </AnimatePresence>
         </div>
 
+        {/* Detailed Recipe Pricing Breakdown */}
+        <div className="receipt-breakdown-card">
+          <div className="receipt-header">
+            <span>Selected Customization Recipe Breakdown</span>
+          </div>
+          <div className="receipt-items">
+            {activeReceiptItems.map((item, index) => (
+              <div key={index} className="receipt-item-row">
+                <span className="receipt-item-name">{item.name}</span>
+                <span className="receipt-item-dots"></span>
+                <span className="receipt-item-price">
+                  {item.price > 0 ? `+${formatCurrency(item.price)}` : item.price < 0 ? `-${formatCurrency(Math.abs(item.price))}` : 'Included'}
+                </span>
+              </div>
+            ))}
+            {activeReceiptItems.length === 0 && (
+              <div className="receipt-empty">No ingredients selected yet.</div>
+            )}
+          </div>
+        </div>
+
         <div className="build-actions">
           <button className="step-nav-btn" disabled={stage === 0 || isAdding} onClick={() => setStage((current) => Math.max(0, current - 1))}>Back</button>
           {stage < 2 && (
             <button className="step-nav-btn primary-step" onClick={() => setStage((current) => Math.min(2, current + 1))}>Next</button>
           )}
+          
+          <button 
+            type="button" 
+            className="step-nav-btn favorite-step-btn" 
+            disabled={isSavingFavorite || !requiredSelectionsMade}
+            onClick={handleSaveFavorite}
+          >
+            <Star size={16} className="star-icon" />
+            {isSavingFavorite ? 'Saving...' : 'Save Favorite'}
+          </button>
+
           <div className="action-total">
             <span>Total</span>
             <strong>{formatCurrency(total)}</strong>
           </div>
+          
           <motion.button
             whileTap={requiredSelectionsMade ? { scale: 0.98 } : {}}
             className="add-order-btn"
