@@ -26,7 +26,7 @@ const RecipeEngine = () => {
     setIsLoading(true);
     try {
       const pRes = await productService.getAll();
-      const pList = pRes.data || pRes || [];
+      const pList = pRes.data?.products || pRes.products || pRes.data || pRes || [];
       setProducts(pList);
 
       const iRes = await recipeService.getAll();
@@ -35,7 +35,7 @@ const RecipeEngine = () => {
 
       if (pList.length > 0) {
         setSelectedProduct(pList[0]);
-        await loadMappings(pList[0].uuid);
+        await loadMappings(pList[0].id);
       }
     } catch (err) {
       toast.error('Failed to load recipe data: ' + err.message);
@@ -61,7 +61,7 @@ const RecipeEngine = () => {
   const handleSelectProduct = async (product) => {
     setSelectedProduct(product);
     setIsEditing(false);
-    await loadMappings(product.uuid);
+    await loadMappings(product.id);
   };
 
   const handleStartEdit = () => {
@@ -79,10 +79,10 @@ const RecipeEngine = () => {
         price_override: null
       }));
 
-      await recipeService.bulkSetMappings(selectedProduct.uuid, payload);
+      await recipeService.bulkSetMappings(selectedProduct.id, payload);
       toast.success(`Recipe for ${selectedProduct.name} saved successfully! 🧬`);
       setIsEditing(false);
-      await loadMappings(selectedProduct.uuid);
+      await loadMappings(selectedProduct.id);
     } catch (err) {
       toast.error('Failed to save recipe: ' + err.message);
     }
