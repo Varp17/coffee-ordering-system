@@ -1,21 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './Catalog.css';
 import Button from '../../../components/Button/Button';
 import AnimatedCard from '../../../components/Motion/AnimatedCard';
-import { products as mockProducts } from '../../../data/mockData';
+import { productService } from '../../../services/products';
+import { unwrapList } from '../../../utils/apiResponse';
 import { formatCurrency } from '../../../utils/formatters';
+import OrderCardSkeleton from '../../../components/skeletons/OrderCardSkeleton';
 
 const Catalog = ({ onBack, onLogin, onCreateCustom, onCheckout, cart, setCart }) => {
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState(['All']);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [recentlyAdded, setRecentlyAdded] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Derive unique categories dynamically plus "All"
-  const categories = ['All', ...new Set(mockProducts.map(p => p.category))];
+  useEffect(() => {
+    const fetchMenuData = async () => {
+      setIsLoading(true);
+      try {
+        const res = await productService.getAll();
+        const items = unwrapList(res);
+        setProducts(items);
+        const uniqueCats = ['All', ...new Set(items.map(p => p.category).filter(Boolean))];
+        setCategories(uniqueCats);
+      } catch (err) {
+        console.error('[KioskCatalog] Failed to load backend menu:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchMenuData();
+  }, []);
 
   const filteredProducts = selectedCategory === 'All' 
-    ? mockProducts 
-    : mockProducts.filter(p => p.category === selectedCategory);
+    ? products 
+    : products.filter(p => p.category === selectedCategory);
 
   const addToCart = (product) => {
     // Basic conversion for POS cart format
@@ -74,28 +94,34 @@ const Catalog = ({ onBack, onLogin, onCreateCustom, onCheckout, cart, setCart })
           animate="show"
           key={selectedCategory} // Force re-render animation when category changes
         >
-          {filteredProducts.map(product => (
-            <motion.div variants={itemVariants} key={product.id}>
-              <AnimatedCard className="kiosk-product-card" layout={false}>
-                <div 
-                  className="product-image" 
-                  style={{ backgroundImage: `url(${product.image || product.imageUrl || 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'})` }}
-                ></div>
-                <div className="product-details">
-                  <h3>{product.title || product.name}</h3>
-                  <span className="price">{formatCurrency(product.price || 0)}</span>
-                  
-                  <motion.button 
-                    whileTap={{ scale: 0.95 }}
-                    className={`btn btn-large btn-full-width ${recentlyAdded === product.id ? 'btn-success' : 'btn-primary'}`}
-                    onClick={() => addToCart(product)}
-                  >
-                    {recentlyAdded === product.id ? '✓ Added' : '+ Add to Order'}
-                  </motion.button>
-                </div>
-              </AnimatedCard>
-            </motion.div>
-          ))}
+          {isLoading ? (
+            Array.from({ length: 6 }).map((_, idx) => (
+              <OrderCardSkeleton key={idx} />
+            ))
+          ) : (
+            filteredProducts.map(product => (
+              <motion.div variants={itemVariants} key={product.id}>
+                <AnimatedCard className="kiosk-product-card" layout={false}>
+                  <div 
+                    className="product-image" 
+                    style={{ backgroundImage: `url(${product.image_url || product.image || product.imageUrl || 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'})` }}
+                  ></div>
+                  <div className="product-details">
+                    <h3>{product.title || product.name}</h3>
+                    <span className="price">{formatCurrency(product.price || product.base_price || 0)}</span>
+                    
+                    <motion.button 
+                      whileTap={{ scale: 0.95 }}
+                      className={`btn btn-large btn-full-width ${recentlyAdded === product.id ? 'btn-success' : 'btn-primary'}`}
+                      onClick={() => addToCart(product)}
+                    >
+                      {recentlyAdded === product.id ? '✓ Added' : '+ Add to Order'}
+                    </motion.button>
+                  </div>
+                </AnimatedCard>
+              </motion.div>
+            ))
+          )}
         </motion.div>
       </div>
 

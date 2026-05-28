@@ -4,6 +4,7 @@ import Button from '../../../components/Button/Button';
 import { inventoryService } from '../../../services/inventory';
 import { unwrapList } from '../../../utils/apiResponse';
 import toast from 'react-hot-toast';
+import DataTable from '../../../components/ui/DataTable';
 
 const Inventory = () => {
   const [currentTab, setCurrentTab] = useState('store'); // 'store' | 'central' | 'vendors'
@@ -27,13 +28,12 @@ const Inventory = () => {
       }));
       setStoreItems(mappedStore);
 
-      // Central inventory is mocked or can use another store ID (e.g. facility ID)
-      const centralRes = await inventoryService.getStockLevels({ store_id: 1 }); // Let's reuse or map standard
+      const centralRes = await inventoryService.getStockLevels({ store_id: 1 });
       const centralStock = unwrapList(centralRes);
       const mappedCentral = (Array.isArray(centralStock) ? centralStock : []).map(item => ({
         id: item.ingredient?.id || item.id,
         name: item.ingredient?.name || item.name,
-        stock: (item.quantity ?? 100) * 10, // Simulate warehouse scale
+        stock: (item.quantity ?? 100) * 10,
         threshold: (item.thresholds?.low ?? 20) * 5,
         unit: item.ingredient?.unit || 'g',
         alert_level: item.alert_level || 'ok'
@@ -68,7 +68,6 @@ const Inventory = () => {
       if (!target) return;
 
       const newQty = Math.max(0, target.stock + amount);
-      // Calls stockIn if positive, or recordWastage if negative adjustment
       if (amount > 0) {
         await inventoryService.stockIn({
           store_id: 1,
@@ -98,6 +97,100 @@ const Inventory = () => {
   const handleWasteLog = () => {
     toast.success('Waste log entry recorded', { icon: '🗑️' });
   };
+
+  // Columns for the virtualized DataTable
+  const columns = useMemo(() => [
+    {
+      header: 'Item Name',
+      accessor: 'name',
+      sortable: true,
+      render: (row) => <strong style={{ color: 'var(--color-primary)' }}>{row.name}</strong>
+    },
+    {
+      header: 'Current Stock',
+      accessor: 'stock',
+      sortable: true,
+      render: (row) => {
+        let status = 'healthy';
+        if (row.stock <= row.threshold / 2) status = 'critical';
+        else if (row.stock <= row.threshold) status = 'low';
+        return (
+          <span>
+            <span className={`stock-val ${status !== 'healthy' ? 'low' : ''}`} style={{ fontWeight: '700' }}>
+              {row.stock}
+            </span> <span className="unit-tag" style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{row.unit}</span>
+          </span>
+        );
+      }
+    },
+    {
+      header: 'Reorder Threshold',
+      accessor: 'threshold',
+      sortable: true,
+      render: (row) => (
+        <span>
+          {row.threshold} <span className="unit-tag" style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>{row.unit}</span>
+        </span>
+      )
+    },
+    {
+      header: 'Status',
+      accessor: (row) => {
+        if (row.stock <= row.threshold / 2) return 'critical';
+        if (row.stock <= row.threshold) return 'low';
+        return 'healthy';
+      },
+      sortable: true,
+      render: (row) => {
+        let status = 'healthy';
+        let statusText = 'Healthy';
+        if (row.stock <= row.threshold / 2) {
+          status = 'critical';
+          statusText = 'Critical';
+        } else if (row.stock <= row.threshold) {
+          status = 'low';
+          statusText = 'Low Stock';
+        }
+        return (
+          <span className={`status-indicator ${status}`} style={{
+            display: 'inline-flex', alignItems: 'center', gap: '4px',
+            padding: '2px 8px', borderRadius: '4px', fontSize: '0.8rem', fontWeight: '600'
+          }}>
+            {status === 'healthy' ? '🟢' : status === 'low' ? '🟡' : '🔴'} {statusText}
+          </span>
+        );
+      }
+    },
+    {
+      header: 'Quick Adjust',
+      accessor: 'id',
+      sortable: false,
+      render: (row) => (
+        <div className="adjust-actions" style={{ display: 'flex', gap: '6px' }}>
+          <button 
+            className="adjust-btn" 
+            onClick={() => updateStock(row.id, -10, currentTab === 'central')}
+            style={{
+              padding: '2px 8px', fontSize: '0.8rem', border: '1px solid var(--color-border)',
+              borderRadius: '4px', cursor: 'pointer', backgroundColor: 'var(--color-surface)'
+            }}
+          >
+            -10
+          </button>
+          <button 
+            className="adjust-btn" 
+            onClick={() => updateStock(row.id, 50, currentTab === 'central')}
+            style={{
+              padding: '2px 8px', fontSize: '0.8rem', border: '1px solid var(--color-border)',
+              borderRadius: '4px', cursor: 'pointer', backgroundColor: 'var(--color-surface)'
+            }}
+          >
+            +50
+          </button>
+        </div>
+      )
+    }
+  ], [currentTab]);
 
   if (isLoading && storeItems.length === 0) {
     return (
@@ -178,68 +271,12 @@ const Inventory = () => {
 
       {/* Dynamic Content Area */}
       {currentTab !== 'vendors' ? (
-        <div className="table-container">
-          <table className="table inventory-table">
-            <thead>
-              <tr>
-                <th>Item Name</th>
-                <th>Current Stock</th>
-                <th>Reorder Threshold</th>
-                <th>Status</th>
-                <th>Quick Adjust</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredItems.length === 0 ? (
-                <tr><td colSpan="5" className="table-empty">No items match your search.</td></tr>
-              ) : (
-                filteredItems.map(item => {
-                  let status = 'healthy';
-                  let statusText = 'Healthy';
-                  if (item.stock <= item.threshold / 2) {
-                    status = 'critical';
-                    statusText = 'Critical';
-                  } else if (item.stock <= item.threshold) {
-                    status = 'low';
-                    statusText = 'Low Stock';
-                  }
-
-                  return (
-                    <tr key={item.id}>
-                      <td><strong>{item.name}</strong></td>
-                      <td>
-                        <span className={`stock-val ${status !== 'healthy' ? 'low' : ''}`}>
-                          {item.stock}
-                        </span> <span className="unit-tag">{item.unit}</span>
-                      </td>
-                      <td>{item.threshold} <span className="unit-tag">{item.unit}</span></td>
-                      <td>
-                        <span className={`status-indicator ${status}`}>
-                          {status === 'healthy' ? '🟢' : status === 'low' ? '🟡' : '🔴'} {statusText}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="adjust-actions">
-                          <button 
-                            className="adjust-btn" 
-                            onClick={() => updateStock(item.id, -10, currentTab === 'central')}
-                          >
-                            -10
-                          </button>
-                          <button 
-                            className="adjust-btn" 
-                            onClick={() => updateStock(item.id, 50, currentTab === 'central')}
-                          >
-                            +50
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
+        <div style={{ flexGrow: 1, overflowY: 'auto' }}>
+          <DataTable
+            columns={columns}
+            data={filteredItems}
+            exportFileName={`${currentTab}-inventory`}
+          />
         </div>
       ) : (
         /* Vendors View */

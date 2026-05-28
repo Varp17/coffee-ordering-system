@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import './Analytics.css';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -9,6 +9,7 @@ import { inventoryService } from '../../../services/inventory';
 import { formatCurrency } from '../../../utils/formatters';
 import { unwrapList, unwrapObject } from '../../../utils/apiResponse';
 import toast from 'react-hot-toast';
+import DataTable from '../../../components/ui/DataTable';
 
 const Analytics = () => {
   const [timeRange, setTimeRange] = useState('weekly'); // 'weekly' | 'monthly'
@@ -59,21 +60,84 @@ const Analytics = () => {
   };
 
   // Safe formatting of data for Recharts
-  const weeklyChartData = (dashboardData?.weeklyRevenue || []).map(d => ({
-    name: d.day,
-    Revenue: d.revenue || 0,
-    Orders: d.orders || 0,
-  }));
+  const weeklyChartData = useMemo(() => {
+    return (dashboardData?.weeklyRevenue || []).map(d => ({
+      name: d.day,
+      Revenue: d.revenue || 0,
+      Orders: d.orders || 0,
+    }));
+  }, [dashboardData]);
 
-  const monthlyChartData = monthlyData.map(d => ({
-    name: d.month,
-    Revenue: d.revenue || 0,
-  }));
+  const monthlyChartData = useMemo(() => {
+    return monthlyData.map(d => ({
+      name: d.month,
+      Revenue: d.revenue || 0,
+    }));
+  }, [monthlyData]);
 
-  const hourlyChartData = hourlyData.map(d => ({
-    name: d.hour,
-    Orders: d.orders || 0,
-  }));
+  const hourlyChartData = useMemo(() => {
+    return hourlyData.map(d => ({
+      name: d.hour,
+      Orders: d.orders || 0,
+    }));
+  }, [hourlyData]);
+
+  // Columns for Top Menu Products list
+  const topProductsColumns = useMemo(() => [
+    {
+      header: 'Product Name',
+      accessor: 'name',
+      sortable: true,
+      render: (row) => <strong style={{ color: 'var(--color-primary)' }}>{row.name}</strong>
+    },
+    {
+      header: 'Quantity Sold',
+      accessor: 'sales',
+      sortable: true,
+      render: (row) => <span>{row.sales} units</span>
+    },
+    {
+      header: 'Total Revenue',
+      accessor: 'revenue',
+      sortable: true,
+      render: (row) => <span className="profit-col">{formatCurrency(row.revenue)}</span>
+    }
+  ], []);
+
+  // Columns for Warehouse Alerts
+  const inventoryLevelsColumns = useMemo(() => [
+    {
+      header: 'Ingredient',
+      accessor: 'name',
+      sortable: true,
+      render: (row) => <strong>{row.name}</strong>
+    },
+    {
+      header: 'Stock Value',
+      accessor: 'stock',
+      sortable: true,
+      render: (row) => <span>{row.stock} {row.unit}</span>
+    },
+    {
+      header: 'Safety Threshold',
+      accessor: 'threshold',
+      sortable: true,
+      render: (row) => <span>{row.threshold} {row.unit}</span>
+    },
+    {
+      header: 'Status',
+      accessor: (row) => (row.stock <= row.threshold ? 'low' : 'ok'),
+      sortable: true,
+      render: (row) => {
+        const isLow = row.stock <= row.threshold;
+        return (
+          <span className={`alert-badge ${isLow ? 'low' : 'ok'}`}>
+            {isLow ? '⚠️ LOW STOCK' : '🟢 STABLE'}
+          </span>
+        );
+      }
+    }
+  ], []);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -226,70 +290,31 @@ const Analytics = () => {
       </motion.div>
 
       <motion.div className="analytics-details-grid" variants={containerVariants}>
-        {/* Top items table */}
+        {/* Top items ranking table */}
         <motion.div className="details-card" variants={itemVariants}>
           <h3>⭐ Menu Items Contribution Ranking</h3>
-          <div className="styled-table-wrap">
-            <table className="analytics-table">
-              <thead>
-                <tr>
-                  <th>Product Name</th>
-                  <th>Quantity Sold</th>
-                  <th>Total Revenue contribution</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topProducts.length === 0 ? (
-                  <tr><td colSpan="3" style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--color-text-secondary)' }}>No product telemetry available.</td></tr>
-                ) : (
-                  topProducts.map((p, idx) => (
-                    <tr key={idx}>
-                      <td><strong>{p.name}</strong></td>
-                      <td>{p.sales} units</td>
-                      <td className="profit-col">{formatCurrency(p.revenue)}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+          <div style={{ marginTop: 'var(--space-12)' }}>
+            <DataTable
+              columns={topProductsColumns}
+              data={topProducts}
+              exportFileName="top-menu-contributions"
+              searchKey="name"
+              searchPlaceholder="Search ranking menu items..."
+            />
           </div>
         </motion.div>
 
         {/* Warehouse movements */}
         <motion.div className="details-card" variants={itemVariants}>
           <h3>🏢 Central Warehouse Replenishment Alerts</h3>
-          <div className="styled-table-wrap">
-            <table className="analytics-table">
-              <thead>
-                <tr>
-                  <th>Ingredient</th>
-                  <th>Stock Value</th>
-                  <th>Safety Threshold</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {inventoryLevels.length === 0 ? (
-                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--color-text-secondary)' }}>No warehouse inventory alerts.</td></tr>
-                ) : (
-                  inventoryLevels.map((item) => {
-                    const isLow = item.stock <= item.threshold;
-                    return (
-                      <tr key={item.id}>
-                        <td>{item.name}</td>
-                        <td>{item.stock} {item.unit}</td>
-                        <td>{item.threshold} {item.unit}</td>
-                        <td>
-                          <span className={`alert-badge ${isLow ? 'low' : 'ok'}`}>
-                            {isLow ? '⚠️ LOW STOCK' : '🟢 STABLE'}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+          <div style={{ marginTop: 'var(--space-12)' }}>
+            <DataTable
+              columns={inventoryLevelsColumns}
+              data={inventoryLevels}
+              exportFileName="replenishment-safety-alerts"
+              searchKey="name"
+              searchPlaceholder="Search ingredients alerts..."
+            />
           </div>
         </motion.div>
       </motion.div>

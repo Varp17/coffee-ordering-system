@@ -4,6 +4,7 @@ import Button from '../../../components/Button/Button';
 import { useOrderStore } from '../../../store/useOrderStore';
 import { formatCurrency } from '../../../utils/formatters';
 import toast from 'react-hot-toast';
+import DataTable from '../../../components/ui/DataTable';
 
 const Orders = () => {
   const { orders: ordersList, fetchOrders, updateOrderStatus, refundOrder, isLoading } = useOrderStore();
@@ -22,7 +23,7 @@ const Orders = () => {
   const sourceOptions = ['all', 'd2c_website', 'kiosk'];
 
   const filteredOrders = useMemo(() => {
-    return ordersList.filter(order => {
+    return (ordersList || []).filter(order => {
       const matchesStatus = statusFilter === 'all' || order.status?.toLowerCase() === statusFilter.toLowerCase();
       const matchesSource = sourceFilter === 'all' || order.channel?.toLowerCase() === sourceFilter.toLowerCase();
       const matchesSearch = searchQuery === '' ||
@@ -79,14 +80,122 @@ const Orders = () => {
   };
 
   const orderStats = useMemo(() => ({
-    total: ordersList.length,
-    pending: ordersList.filter(o => o.status === 'pending').length,
-    inProgress: ordersList.filter(o => o.status === 'in_progress').length,
-    completed: ordersList.filter(o => o.status === 'completed').length,
-    totalRevenue: ordersList.reduce((s, o) => s + parseFloat(o.total_amount || 0), 0),
+    total: (ordersList || []).length,
+    pending: (ordersList || []).filter(o => o.status === 'pending').length,
+    inProgress: (ordersList || []).filter(o => o.status === 'in_progress').length,
+    completed: (ordersList || []).filter(o => o.status === 'completed').length,
+    totalRevenue: (ordersList || []).reduce((s, o) => s + parseFloat(o.total_amount || 0), 0),
   }), [ordersList]);
 
-  if (isLoading && ordersList.length === 0) {
+  // Define columns structure for the new virtualized DataTable component
+  const columns = useMemo(() => [
+    {
+      header: 'Order ID',
+      accessor: 'order_number',
+      sortable: true,
+      render: (row) => <strong style={{ color: 'var(--color-primary)' }}>{row.order_number || row.id}</strong>
+    },
+    {
+      header: 'Customer',
+      accessor: 'customer_name',
+      sortable: true,
+      render: (row) => (
+        <div className="customer-cell" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="customer-avatar" style={{
+            width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'var(--color-primary-light)',
+            color: 'var(--color-primary)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: 'bold', fontSize: '0.85rem'
+          }}>
+            {(row.customer_name || 'G').charAt(0)}
+          </span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span className="customer-name" style={{ fontWeight: '600' }}>{row.customer_name || 'Guest'}</span>
+            <span className="customer-email" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{row.customer_email || ''}</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      header: 'Items',
+      accessor: 'items_summary',
+      sortable: false,
+      render: (row) => (
+        <div className="items-cell" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+          {(row.items_summary || '').split(', ').filter(Boolean).map((item, i) => (
+            <span key={i} className="item-tag" style={{
+              backgroundColor: 'var(--color-surface-hover)', padding: '2px 6px',
+              borderRadius: '4px', fontSize: '0.75rem', fontWeight: '500'
+            }}>{item}</span>
+          ))}
+        </div>
+      )
+    },
+    {
+      header: 'Total',
+      accessor: (row) => parseFloat(row.total_amount || row.total || 0),
+      sortable: true,
+      render: (row) => <strong>{formatCurrency(row.total_amount || row.total)}</strong>
+    },
+    {
+      header: 'Source',
+      accessor: 'channel',
+      sortable: true,
+      render: (row) => (
+        <span className={`source-badge source-${(row.channel || 'kiosk').toLowerCase()}`}>
+          {row.channel || 'kiosk'}
+        </span>
+      )
+    },
+    {
+      header: 'Status',
+      accessor: 'status',
+      sortable: true,
+      render: (row) => (
+        <span className={`status-badge ${getStatusColor(row.status)}`}>
+          {row.status}
+        </span>
+      )
+    },
+    {
+      header: 'Time',
+      accessor: 'created_at',
+      sortable: true,
+      render: (row) => row.created_at ? new Date(row.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+    },
+    {
+      header: 'Actions',
+      accessor: 'id',
+      sortable: false,
+      render: (row) => (
+        <div className="actions-cell" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+          {getNextStatus(row.status) && (
+            <button
+              className="action-btn-sm primary"
+              onClick={() => handleStatusChange(row.id, getNextStatus(row.status))}
+              style={{
+                height: '28px !important', padding: '0 8px !important', fontSize: '0.8rem !important',
+                backgroundColor: 'var(--color-primary)', color: 'white', borderRadius: '4px', border: 'none'
+              }}
+            >
+              → {getNextStatus(row.status).replace('_', ' ')}
+            </button>
+          )}
+          <button 
+            className="action-btn-sm outline" 
+            onClick={() => openDetail(row)}
+            style={{
+              height: '28px !important', padding: '0 8px !important', fontSize: '0.8rem !important',
+              backgroundColor: 'transparent', border: '1px solid var(--color-border)', borderRadius: '4px'
+            }}
+          >
+            View
+          </button>
+        </div>
+      )
+    }
+  ], []);
+
+  if (isLoading && (ordersList || []).length === 0) {
     return (
       <div className="orders-view flex-center" style={{ height: '70vh' }}>
         <p style={{ color: 'var(--color-text-secondary)' }}>Loading orders...</p>
@@ -161,71 +270,13 @@ const Orders = () => {
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="table-container">
-        <table className="table orders-table">
-          <thead>
-            <tr>
-              <th>Order ID</th>
-              <th>Customer</th>
-              <th>Items</th>
-              <th>Total</th>
-              <th>Source</th>
-              <th>Status</th>
-              <th>Time</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredOrders.length === 0 ? (
-              <tr>
-                <td colSpan="8" className="table-empty">
-                  <div className="empty-state-inline">
-                    <span className="empty-icon">📭</span>
-                    <p>No orders match your filters</p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              filteredOrders.map(order => (
-                <tr key={order.id} className="order-row" onClick={() => openDetail(order)}>
-                  <td className="order-id-cell"><strong>{order.order_number || order.id}</strong></td>
-                  <td>
-                    <div className="customer-cell">
-                      <span className="customer-avatar">{(order.customer_name || 'G').charAt(0)}</span>
-                      <div>
-                        <span className="customer-name">{order.customer_name || 'Guest'}</span>
-                        <span className="customer-email">{order.customer_email || ''}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="items-cell">
-                    {(order.items_summary || '').split(', ').map((item, i) => (
-                      <span key={i} className="item-tag">{item}</span>
-                    ))}
-                  </td>
-                  <td className="total-cell"><strong>{formatCurrency(order.total_amount || order.total)}</strong></td>
-                  <td><span className={`source-badge source-${(order.channel || 'kiosk').toLowerCase()}`}>{order.channel || 'kiosk'}</span></td>
-                  <td><span className={`status-badge ${getStatusColor(order.status)}`}>{order.status}</span></td>
-                  <td className="time-cell">{order.created_at ? new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</td>
-                  <td className="actions-cell" onClick={(e) => e.stopPropagation()}>
-                    {getNextStatus(order.status) && (
-                      <button
-                        className="action-btn-sm primary"
-                        onClick={() => handleStatusChange(order.id, getNextStatus(order.status))}
-                      >
-                        → {getNextStatus(order.status).replace('_', ' ')}
-                      </button>
-                    )}
-                    <button className="action-btn-sm outline" onClick={() => openDetail(order)}>
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      {/* Orders DataTable */}
+      <div style={{ flexGrow: 1, overflowY: 'auto' }}>
+        <DataTable
+          columns={columns}
+          data={filteredOrders}
+          exportFileName="orders-report"
+        />
       </div>
 
       {/* Order Detail Modal */}

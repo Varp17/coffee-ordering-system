@@ -1,0 +1,157 @@
+/* ==========================================================================
+   DATA TABLE COMPONENT STYLES — Digital Coffee Platform
+   Stripe/Linear style high-density layout
+   ========================================================================== */
+
+.data-table-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-12);
+  box-shadow: var(--elevation-1);
+}
+
+.data-table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+}
+
+.data-table-search-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 280px;
+}
+
+.data-table-search-wrapper svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+}
+
+.data-table-search-input {
+  width: 100%;
+  padding-left: 32px !important;
+  background-color: var(--color-surface-alt) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  font-size: 0.9rem;
+}
+
+.data-table-export-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: 6px 12px !important;
+  background-color: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+}
+
+.data-table-export-btn:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.data-table-container {
+  overflow-x: auto;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.data-table th {
+  background-color: var(--color-surface-alt);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  user-select: none;
+  cursor: pointer;
+  padding: 10px 14px !important;
+}
+
+.data-table th:hover {
+  color: var(--color-text);
+}
+
+.data-table-header-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.data-table td {
+  padding: 10px 14px !important;
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  vertical-align: middle;
+}
+
+.data-table tr:hover td {
+  background-color: var(--color-surface-alt);
+  color: var(--color-text);
+}
+
+.data-table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+  padding-top: var(--space-8);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.data-table-pagination {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.data-table-pg-btn {
+  padding: 4px 10px !important;
+  font-size: 0.8rem !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-sm) !important;
+  background-color: var(--color-surface) !important;
+  color: var(--color-text-secondary) !important;
+  transition: all 0.2s ease;
+  min-height: 28px !important;
+  height: 28px !important;
+}
+
+.data-table-pg-btn:hover:not(:disabled) {
+  background-color: var(--color-surface-hover) !important;
+}
+
+.data-table-pg-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.data-table-pg-btn.active {
+  background-color: var(--color-primary) !important;
+  color: #fff !important;
+  border-color: var(--color-primary) !important;
+}

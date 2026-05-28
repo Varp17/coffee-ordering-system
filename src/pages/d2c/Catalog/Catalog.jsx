@@ -10,6 +10,7 @@ import { useCartStore } from '../../../store/useCartStore';
 import toast from 'react-hot-toast';
 import { t } from '../../../utils/i18n';
 import CustomizationModal from '../../../components/CustomizationModal/CustomizationModal';
+import Skeleton from '../../../components/ui/Skeleton';
 
 const Catalog = () => {
   const [products, setProducts] = useState([]);
@@ -126,7 +127,14 @@ const Catalog = () => {
         </div>
 
         {/* Category Tabs */}
-        {categories.length > 0 && (
+        {loading && categories.length === 0 ? (
+          <div className="catalog-tabs-container" style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px' }}>
+            <Skeleton className="h-9 w-20 rounded-full" />
+            <Skeleton className="h-9 w-24 rounded-full" />
+            <Skeleton className="h-9 w-28 rounded-full" />
+            <Skeleton className="h-9 w-24 rounded-full" />
+          </div>
+        ) : categories.length > 0 ? (
           <div className="catalog-tabs-container">
             <Tabs 
               tabs={categories}
@@ -136,7 +144,7 @@ const Catalog = () => {
               size="medium"
             />
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Grid listing */}
