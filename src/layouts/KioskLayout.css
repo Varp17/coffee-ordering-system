@@ -2,8 +2,8 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: var(--color-bg);
-  color: var(--color-text);
+  background-color: #FAF8F5; /* Sandy cream backdrop */
+  color: var(--color-espresso);
   font-family: var(--font-body);
   overflow: hidden;
   user-select: none;
@@ -12,31 +12,32 @@
 
 .kiosk-top-bar {
   height: 80px;
-  background-color: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background-color: #FFFFFF;
+  border-bottom: 2px solid rgba(111, 78, 55, 0.08);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 2.5rem;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--elevation-1);
   z-index: 100;
 }
 
 .kiosk-back-arrow-btn {
-  background-color: var(--color-surface-alt);
-  border: 1px solid var(--color-border);
-  color: var(--color-secondary);
+  background-color: var(--color-cream);
+  border: 1px solid rgba(111, 78, 55, 0.12);
+  color: var(--color-primary);
   font-weight: 700;
   font-size: 1.1rem;
   padding: 0.6rem 1.4rem;
   border-radius: 30px;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all var(--transition-bounce);
 }
 
 .kiosk-back-arrow-btn:hover {
   background-color: var(--color-surface-hover);
   transform: translateX(-2px);
+  border-color: var(--color-primary);
 }
 
 .kiosk-progress-bar-steps {
@@ -46,24 +47,27 @@
 }
 
 .step-dot {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1rem;
   color: var(--color-text-muted);
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
+  padding: 0.5rem 1.2rem;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
   transition: all var(--transition-normal);
 }
 
 .step-dot.completed {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-  font-weight: 700;
+  background-color: var(--color-forest-green) !important; /* Premium Forest Green accent */
+  color: #FFFFFF !important;
+  border-color: var(--color-forest-green-light);
+  font-weight: 800;
+  box-shadow: 0 4px 10px rgba(20, 53, 43, 0.25);
 }
 
 .step-line-connector {
   width: 40px;
   height: 2px;
-  background-color: var(--color-border);
+  background-color: rgba(111, 78, 55, 0.08);
 }
 
 .kiosk-right-info {
@@ -72,50 +76,53 @@
 }
 
 .kiosk-cart-summary-bubble {
-  background-color: var(--color-secondary);
+  background: linear-gradient(135deg, var(--color-primary), #8B6347);
   color: white;
-  font-weight: 700;
+  font-weight: 850;
   font-size: 1.05rem;
-  padding: 0.6rem 1.4rem;
+  padding: 0.6rem 1.6rem;
   border-radius: 30px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(111, 78, 55, 0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .kiosk-view-workspace {
   flex-grow: 1;
   overflow-y: auto;
   position: relative;
-  background-color: var(--color-bg);
+  background-color: #FCFAF8; /* Soft warm backdrop */
 }
 
 .kiosk-assistive-footer {
   height: 60px;
-  background-color: var(--color-surface-alt);
-  border-top: 1px solid var(--color-border);
+  background-color: var(--color-cream);
+  border-top: 1px solid rgba(111, 78, 55, 0.08);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 2.5rem;
   font-size: 0.9rem;
-  color: var(--color-text-muted);
-  font-weight: 500;
+  color: var(--color-text-secondary);
+  font-weight: 600;
 }
 
 .kiosk-help-trigger-btn {
   background-color: var(--color-accent);
-  border: none;
-  color: var(--color-secondary);
-  font-weight: 700;
+  border: 1px solid rgba(111, 78, 55, 0.15);
+  color: var(--color-espresso);
+  font-weight: 800;
   font-size: 0.9rem;
-  padding: 0.5rem 1.2rem;
+  padding: 0.5rem 1.4rem;
   border-radius: 30px;
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 10px rgba(200, 169, 126, 0.25);
   transition: all var(--transition-fast);
 }
 
 .kiosk-help-trigger-btn:hover {
-  background-color: #DDA059;
+  filter: brightness(1.05);
   transform: translateY(-1px);
 }
 
@@ -126,7 +133,7 @@
   }
   
   .kiosk-progress-bar-steps {
-    display: none; /* Hide steps on mobile/portrait kiosk */
+    display: none;
   }
 
   .kiosk-back-arrow-btn {

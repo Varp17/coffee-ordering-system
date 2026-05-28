@@ -30,6 +30,12 @@
   --color-espresso-light:  #231711;
   --color-espresso-medium: #2D1E16;
 
+  /* Forest Green Theme */
+  --color-forest-green:       #14352B;
+  --color-forest-green-light: #1C4438;
+  --color-forest-green-glow:  rgba(20, 53, 43, 0.15);
+  --color-forest-green-cream: #E8EDE9;
+
   /* Cream */
   --color-cream:           #FAF6F1;
   --color-cream-dark:      #F0EAE2;
@@ -310,6 +316,11 @@ ul, ol {
 @keyframes countUp {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes infiniteScroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }
 
 /* ============================================

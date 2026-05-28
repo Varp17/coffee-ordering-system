@@ -94,9 +94,10 @@
 }
 
 .menu-item.active {
-  background-color: rgba(111, 78, 55, 0.08); /* Transparent primary */
-  color: var(--color-primary);
-  font-weight: 600;
+  background-color: var(--color-forest-green) !important; /* Elegant Forest Green active tag */
+  color: #FFFFFF !important;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(20, 53, 43, 0.15);
 }
 
 .menu-icon {

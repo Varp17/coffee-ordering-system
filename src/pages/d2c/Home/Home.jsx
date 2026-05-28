@@ -17,6 +17,8 @@ import { useCartStore } from '../../../store/useCartStore';
 import { formatCurrency } from '../../../utils/formatters';
 import toast from 'react-hot-toast';
 import { t } from '../../../utils/i18n';
+import RecipeDiscoverer from '../../../components/RecipeDiscoverer/RecipeDiscoverer';
+import LoyaltyClub from '../../../components/LoyaltyClub/LoyaltyClub';
 
 // Scroll-triggered section wrapper
 const ScrollReveal = ({ children, className = '', delay = 0 }) => {
@@ -244,6 +246,29 @@ const Home = () => {
         </div>
       </section>
 
+      {/* BRAND PARTNER MARQUEE */}
+      <section className="brand-marquee-section">
+        <div className="marquee-container">
+          <div className="marquee-content">
+            {Array(2).fill([
+              { name: 'Tim Hortons', font: 'Playfair Display' },
+              { name: 'COSTA COFFEE', font: 'Outfit' },
+              { name: 'NORTH END', font: 'Inter' },
+              { name: 'DUNKIN\'', font: 'Outfit' },
+              { name: 'BLUE TOKAI', font: 'Inter' },
+              { name: 'Starbucks', font: 'Playfair Display' }
+            ]).flat().map((brand, idx) => (
+              <span key={idx} className="marquee-brand" style={{ fontFamily: `var(--font-${brand.font.toLowerCase().replace(' ', '-')}, sans-serif)` }}>
+                {brand.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* INTERACTIVE RECIPE DISCOVERER */}
+      <RecipeDiscoverer />
+
       {/* SECTION 2: BRAND PILLARS */}
       <section className="pillars-section">
         <div className="section-container">
@@ -272,6 +297,9 @@ const Home = () => {
           </StaggerContainer>
         </div>
       </section>
+
+      {/* GAMIFIED LOYALTY CLUB */}
+      <LoyaltyClub />
 
       {/* SECTION 3: FEATURED PRODUCTS */}
       <section className="featured-section">
@@ -339,6 +367,37 @@ const Home = () => {
                 <ArrowRight size={18} />
               </Button>
             </ScrollReveal>
+          </div>
+        </div>
+      </section>
+
+      {/* CAMPAIGN BANNER: SIPS WORTH SHARING */}
+      <section className="sips-campaign-section">
+        <div className="section-container">
+          <div className="sips-campaign-card">
+            <div className="sips-image-side">
+              <img src="/images/hero/cold-brew.png" alt="Sips Worth Sharing" className="sips-hero-img" />
+              <div className="sips-quote-floating glass-card-dark">
+                <p>"Because great coffee isn't just a drink — it's a shared experience."</p>
+              </div>
+            </div>
+            <div className="sips-text-side">
+              <span className="eyebrow" style={{ color: 'var(--color-accent)' }}>Forest Campaign</span>
+              <h2>SIPS WORTH<br /><span className="italic-accent-green">SHARING</span></h2>
+              <p>
+                From aerating standard recipes to sharing a freshly crafted shaker glass of cold brew concentrate with your colleagues — we brew for the moments that bring people together.
+              </p>
+              <div className="sips-features-grid">
+                <div className="sips-feat-item">
+                  <span className="feat-num">100%</span>
+                  <span className="feat-lbl">Traceable Beans</span>
+                </div>
+                <div className="sips-feat-item">
+                  <span className="feat-num">₹0</span>
+                  <span className="feat-lbl">Delivery over ₹999</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
